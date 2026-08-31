@@ -22,3 +22,30 @@ faiss_index/
 # OS
 .DS_Store
 Thumbs.db
+
+# CareFlow-specific frontend components
+frontend/src/components/analytics/*
+!frontend/src/components/analytics/.gitkeep
+frontend/src/components/dashboard/Alerts.jsx
+frontend/src/components/dashboard/DepartmentWorkload.jsx
+frontend/src/components/dashboard/QueueOverview.jsx
+frontend/src/components/dashboard/Recommendations.jsx
+frontend/src/components/dashboard/WaitingPrediction.jsx
+
+frontend/src/components/doctors/*
+frontend/src/components/patients/*
+
+# CareFlow-specific pages
+frontend/src/pages/Analytics.jsx
+frontend/src/pages/Departments.jsx
+frontend/src/pages/Doctors.jsx
+frontend/src/pages/Patients.jsx
+
+# CareFlow-specific services
+frontend/src/services/analyticsService.js
+frontend/src/services/doctorService.js
+frontend/src/services/patientService.js
+frontend/src/services/queueService.js
+
+# CareFlow-specific utilities
+frontend/src/utils/queueLogic.js
