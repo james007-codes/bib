@@ -1,0 +1,143 @@
+{
+  "priorities": ["Low", "Medium", "High", "Critical"],
+  "statuses": ["Reported", "Assigned", "In Progress", "Resolved"],
+  "recurrenceWindowDays": 30,
+  "overloadThreshold": 5,
+
+  "flairGroups": [
+    { "id": "electrical-safety", "label": "Electrical & Safety" },
+    { "id": "classroom", "label": "Classroom Resources" },
+    { "id": "labs-it", "label": "Labs & IT" },
+    { "id": "water-washroom", "label": "Water & Washroom" },
+    { "id": "canteen", "label": "Canteen" },
+    { "id": "campus", "label": "Campus" }
+  ],
+
+  "flairs": [
+    { "id": "electrical-hazard", "label": "Electrical Hazard", "group": "electrical-safety", "icon": "Zap", "color": "#DC2626", "defaultPriority": "Critical" },
+    { "id": "fire-safety", "label": "Fire Safety", "group": "electrical-safety", "icon": "Flame", "color": "#EA580C", "defaultPriority": "Critical" },
+    { "id": "power-outage", "label": "Power Outage", "group": "electrical-safety", "icon": "PlugZap", "color": "#D97706", "defaultPriority": "High" },
+    { "id": "lights", "label": "Lights Not Working", "group": "electrical-safety", "icon": "Lightbulb", "color": "#CA8A04", "defaultPriority": "Low" },
+
+    { "id": "fan", "label": "Fan Not Working", "group": "classroom", "icon": "Fan", "color": "#0891B2", "defaultPriority": "Medium" },
+    { "id": "ac", "label": "AC Not Working", "group": "classroom", "icon": "AirVent", "color": "#0284C7", "defaultPriority": "Medium" },
+    { "id": "projector", "label": "Projector Issue", "group": "classroom", "icon": "Projector", "color": "#4F46E5", "defaultPriority": "Medium" },
+    { "id": "smart-board", "label": "Smart Board Not Working", "group": "classroom", "icon": "Presentation", "color": "#7C3AED", "defaultPriority": "Medium" },
+    { "id": "furniture", "label": "Broken Bench / Chair", "group": "classroom", "icon": "Armchair", "color": "#A16207", "defaultPriority": "Low" },
+
+    { "id": "computer", "label": "Computer / Lab PC Issue", "group": "labs-it", "icon": "Monitor", "color": "#2563EB", "defaultPriority": "Medium" },
+    { "id": "network", "label": "Wi-Fi & Network", "group": "labs-it", "icon": "Wifi", "color": "#0D9488", "defaultPriority": "Medium" },
+    { "id": "lab-equipment", "label": "Lab Equipment Fault", "group": "labs-it", "icon": "FlaskConical", "color": "#9333EA", "defaultPriority": "Medium" },
+
+    { "id": "water-filter", "label": "Water Filter / Drinking Water", "group": "water-washroom", "icon": "GlassWater", "color": "#0EA5E9", "defaultPriority": "High" },
+    { "id": "plumbing", "label": "Plumbing / Tap Leak", "group": "water-washroom", "icon": "Droplets", "color": "#3B82F6", "defaultPriority": "Medium" },
+    { "id": "washroom-hygiene", "label": "Washroom Hygiene", "group": "water-washroom", "icon": "Bath", "color": "#14B8A6", "defaultPriority": "Medium" },
+
+    { "id": "canteen-hygiene", "label": "Canteen Hygiene", "group": "canteen", "icon": "Bug", "color": "#E11D48", "defaultPriority": "High" },
+    { "id": "canteen-food", "label": "Canteen Food Quality", "group": "canteen", "icon": "UtensilsCrossed", "color": "#F59E0B", "defaultPriority": "Medium" },
+    { "id": "canteen-equipment", "label": "Canteen Equipment", "group": "canteen", "icon": "CookingPot", "color": "#B45309", "defaultPriority": "Low" },
+
+    { "id": "lift", "label": "Lift Not Working", "group": "campus", "icon": "ArrowUpDown", "color": "#DB2777", "defaultPriority": "High" },
+    { "id": "structural", "label": "Structural Damage", "group": "campus", "icon": "Construction", "color": "#B91C1C", "defaultPriority": "High" },
+    { "id": "cleanliness", "label": "Cleanliness / Housekeeping", "group": "campus", "icon": "Sparkles", "color": "#65A30D", "defaultPriority": "Low" },
+    { "id": "other", "label": "Other", "group": "campus", "icon": "CircleHelp", "color": "#64748B", "defaultPriority": "Low" }
+  ],
+
+  "escalationKeywords": {
+    "Critical": [
+      "sparking", "spark", "sparks", "exposed wire", "exposed wires", "exposed wiring",
+      "short circuit", "shock", "electric shock", "smoke", "smoking", "fire", "burning smell",
+      "burning", "gas leak", "flooding", "flooded", "ceiling fell", "collapse", "collapsed"
+    ],
+    "High": [
+      "heavy leak", "leaking heavily", "no power", "power cut", "broken glass", "stuck",
+      "no water", "dirty water", "contaminated", "food poisoning", "insect", "insects",
+      "cockroach", "cockroaches", "rat", "rats", "vomiting"
+    ]
+  },
+
+  "roomTypes": [
+    "Lecture Hall", "Computer Lab", "Electronics Lab", "Seminar Hall", "Library", "Canteen",
+    "Washroom", "Staff Room", "Auditorium", "Corridor", "Common Area", "Hostel"
+  ],
+
+  "buildings": [
+    {
+      "id": "a-block", "name": "A Block",
+      "floors": [
+        { "id": "a-0", "name": "Ground Floor", "rooms": [
+          { "id": "a-0-lobby", "name": "A Block Lobby", "roomType": "Common Area" },
+          { "id": "a-0-wr", "name": "Ground Floor Washroom (A)", "roomType": "Washroom" }
+        ]},
+        { "id": "a-1", "name": "1st Floor", "rooms": [
+          { "id": "lh-101", "name": "LH-101", "roomType": "Lecture Hall" },
+          { "id": "lh-102", "name": "LH-102", "roomType": "Lecture Hall" },
+          { "id": "a-1-wr", "name": "1st Floor Washroom (A)", "roomType": "Washroom" },
+          { "id": "a-1-staff", "name": "Staff Room A1", "roomType": "Staff Room" }
+        ]},
+        { "id": "a-2", "name": "2nd Floor", "rooms": [
+          { "id": "lh-201", "name": "LH-201", "roomType": "Lecture Hall" },
+          { "id": "a-2-corridor", "name": "2nd Floor Corridor (A)", "roomType": "Corridor" }
+        ]}
+      ]
+    },
+    {
+      "id": "b-block", "name": "B Block",
+      "floors": [
+        { "id": "b-1", "name": "1st Floor", "rooms": [
+          { "id": "cl-1", "name": "Computer Lab 1", "roomType": "Computer Lab" },
+          { "id": "el-1", "name": "Electronics Lab 1", "roomType": "Electronics Lab" }
+        ]},
+        { "id": "b-2", "name": "2nd Floor", "rooms": [
+          { "id": "lh-204", "name": "LH-204", "roomType": "Lecture Hall" },
+          { "id": "lh-205", "name": "LH-205", "roomType": "Lecture Hall" },
+          { "id": "b-2-wr", "name": "2nd Floor Washroom (B)", "roomType": "Washroom" }
+        ]},
+        { "id": "b-3", "name": "3rd Floor", "rooms": [
+          { "id": "cl-3", "name": "Computer Lab 3", "roomType": "Computer Lab" },
+          { "id": "lh-301", "name": "LH-301", "roomType": "Lecture Hall" }
+        ]}
+      ]
+    },
+    {
+      "id": "c-block", "name": "C Block",
+      "floors": [
+        { "id": "c-1", "name": "1st Floor", "rooms": [
+          { "id": "seminar-1", "name": "Seminar Hall", "roomType": "Seminar Hall" },
+          { "id": "c-1-staff", "name": "Staff Room C1", "roomType": "Staff Room" }
+        ]},
+        { "id": "c-2", "name": "2nd Floor", "rooms": [
+          { "id": "lh-401", "name": "LH-401", "roomType": "Lecture Hall" },
+          { "id": "c-2-wr", "name": "2nd Floor Washroom (C)", "roomType": "Washroom" }
+        ]}
+      ]
+    },
+    {
+      "id": "library", "name": "Library Building",
+      "floors": [
+        { "id": "lib-0", "name": "Ground Floor", "rooms": [
+          { "id": "lib-reading", "name": "Reading Hall", "roomType": "Library" },
+          { "id": "lib-digital", "name": "Digital Library", "roomType": "Computer Lab" }
+        ]}
+      ]
+    },
+    {
+      "id": "canteen-block", "name": "Canteen Block",
+      "floors": [
+        { "id": "cb-0", "name": "Ground Floor", "rooms": [
+          { "id": "main-canteen", "name": "Main Canteen", "roomType": "Canteen" },
+          { "id": "canteen-kitchen", "name": "Canteen Kitchen", "roomType": "Canteen" },
+          { "id": "cb-water", "name": "Canteen Water Point", "roomType": "Common Area" }
+        ]}
+      ]
+    },
+    {
+      "id": "auditorium", "name": "Auditorium",
+      "floors": [
+        { "id": "aud-0", "name": "Ground Floor", "rooms": [
+          { "id": "main-aud", "name": "Main Auditorium", "roomType": "Auditorium" }
+        ]}
+      ]
+    }
+  ]
+}

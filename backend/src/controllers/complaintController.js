@@ -1,0 +1,190 @@
+import mongoose from "mongoose";
+
+import Complaint from "../models/Complaint.js";
+import { nextSequence } from "../models/Counter.js";
+import config, { flairById, resolveLocation } from "../config/complaintConfig.js";
+import { detectPriority } from "../utils/priority.js";
+import { findRecurrence } from "../utils/recurrence.js";
+import { serializeComplaint } from "../utils/serializeComplaint.js";
+import { fileUrl, cleanupFiles } from "../middleware/uploadMiddleware.js";
+
+const POPULATE = [
+    { path: "reportedBy", select: "name email" },
+    { path: "assignedWorker", select: "name" },
+];
+
+const bad = (res, message, status = 400) => res.status(status).json({ success: false, message });
+
+/* =========================
+   GET /api/complaints/config
+   Flairs, keywords, locations — lets the frontend stay in sync with the server
+========================= */
+export function getComplaintConfig(req, res) {
+    res.json({ success: true, config });
+}
+
+/* =========================
+   POST /api/complaints/preview
+   Live priority + recurrence preview while the user types (nothing is saved)
+========================= */
+export async function previewPriority(req, res) {
+    const { flair, title = "", description = "", buildingId, floorId, roomId } = req.body;
+
+    const result = detectPriority(flair, title, description);
+    if (!result) return bad(res, "A valid flair is required");
+
+    let recurrencePreview = { isRecurring: false, count: 0, windowDays: config.recurrenceWindowDays };
+
+    const location = resolveLocation(buildingId, floorId, roomId);
+    if (location) {
+        const r = await findRecurrence({ roomId: location.roomId, flair });
+        recurrencePreview = { isRecurring: r.isRecurring, count: r.count, windowDays: r.windowDays };
+    }
+
+    res.json({
+        success: true,
+        priority: result.priority,
+        source: result.source,
+        flairDefault: result.flairDefault,
+        matchedKeywords: result.matchedKeywords,
+        recurrencePreview,
+    });
+}
+
+/* =========================
+   POST /api/complaints   (multipart/form-data)
+   fields: flair, title, description, buildingId, floorId, roomId, spot?, reporterType?
+   files:  photos (1–3 images)
+========================= */
+export async function createComplaint(req, res) {
+    const files = req.files || [];
+
+    try {
+        if (req.role !== "user") {
+            cleanupFiles(files);
+            return bad(res, "Only students/faculty accounts can report issues", 403);
+        }
+
+        const { flair, title, description, buildingId, floorId, roomId, spot, reporterType } = req.body;
+
+        const errors = [];
+        if (!flairById[flair]) errors.push("A valid flair is required");
+        if (!title?.trim()) errors.push("Title is required");
+        if (!description?.trim()) errors.push("Description is required");
+        if (!files.length) errors.push("At least one photo is required");
+
+        const location = resolveLocation(buildingId, floorId, roomId);
+        if (!location) errors.push("A valid building, floor and room are required");
+
+        if (errors.length) {
+            cleanupFiles(files);
+            return res.status(400).json({ success: false, message: errors[0], errors });
+        }
+
+        // Server ALWAYS recomputes priority — the preview shown in the browser is never trusted
+        const detected = detectPriority(flair, title, description);
+        const recurrence = await findRecurrence({ roomId: location.roomId, flair });
+
+        const seq = await nextSequence("complaint");
+
+        const complaint = await Complaint.create({
+            ticketNo: `MT-${seq}`,
+            flair,
+            flairGroup: flairById[flair].group,
+            location: { ...location, spot: spot?.trim() || null },
+            title: title.trim(),
+            description: description.trim(),
+            photos: files.map((f) => ({ url: fileUrl(req, f), name: f.originalname })),
+            priority: detected.priority,
+            prioritySource: detected.source,
+            detectedPriority: detected.priority,
+            matchedKeywords: detected.matchedKeywords,
+            status: "Reported",
+            reportedBy: req.account._id,
+            reporterType: reporterType === "Faculty" ? "Faculty" : "Student",
+            isRecurring: recurrence.isRecurring,
+            recurrenceCount: recurrence.count,
+            updates: [
+                {
+                    status: "Reported",
+                    comment:
+                        detected.source === "keyword"
+                            ? `Complaint submitted. Priority raised to ${detected.priority} (matched: ${detected.matchedKeywords.join(", ")}).`
+                            : "Complaint submitted.",
+                    by: "System",
+                },
+            ],
+        });
+
+        await complaint.populate(POPULATE);
+
+        return res.status(201).json({
+            success: true,
+            complaint: serializeComplaint(complaint, {
+                isRecurring: recurrence.isRecurring,
+                count: recurrence.count,
+                windowDays: recurrence.windowDays,
+                history: [],
+            }),
+        });
+    } catch (error) {
+        cleanupFiles(files);
+        console.error("Create complaint error:", error);
+        return bad(res, "Failed to create complaint", 500);
+    }
+}
+
+/* =========================
+   GET /api/complaints/mine?status=&flair=
+========================= */
+export async function getMyComplaints(req, res) {
+    try {
+        const filter = { reportedBy: req.account._id };
+
+        if (config.statuses.includes(req.query.status)) filter.status = req.query.status;
+        if (flairById[req.query.flair]) filter.flair = req.query.flair;
+
+        const complaints = await Complaint.find(filter).sort({ createdAt: -1 }).populate(POPULATE);
+
+        return res.json({ success: true, complaints: complaints.map((c) => serializeComplaint(c)) });
+    } catch (error) {
+        console.error("Get my complaints error:", error);
+        return bad(res, "Failed to load complaints", 500);
+    }
+}
+
+/* =========================
+   GET /api/complaints/:id
+   Owner only (admins use /api/admin/complaints/:id).
+   Returns 404 (not 403) for other users' complaints so ids can't be probed.
+========================= */
+export async function getMyComplaint(req, res) {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) return bad(res, "Complaint not found", 404);
+
+        const complaint = await Complaint.findOne({ _id: id, reportedBy: req.account._id }).populate(POPULATE);
+        if (!complaint) return bad(res, "Complaint not found", 404);
+
+        // Users see the recurrence count, but not other people's complaint details
+        const r = await findRecurrence({
+            roomId: complaint.location.roomId,
+            flair: complaint.flair,
+            before: complaint.createdAt,
+            excludeId: complaint._id,
+        });
+
+        return res.json({
+            success: true,
+            complaint: serializeComplaint(complaint, {
+                isRecurring: r.isRecurring,
+                count: r.count,
+                windowDays: r.windowDays,
+                history: [],
+            }),
+        });
+    } catch (error) {
+        console.error("Get complaint error:", error);
+        return bad(res, "Failed to load complaint", 500);
+    }
+}
