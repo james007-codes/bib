@@ -7,6 +7,7 @@ import { detectPriority, applyRepeatEscalation } from "../utils/priority.js";
 import { findRecurrence, countCampusWide } from "../utils/recurrence.js";
 import { serializeComplaint } from "../utils/serializeComplaint.js";
 import { predictPriority, learnFromComplaint } from "../services/priorityModel.js";
+import { saveComplaintToOrdersFile } from "../utils/ordersFile.js";
 import { fileUrl, cleanupFiles } from "../middleware/uploadMiddleware.js";
 
 const POPULATE = [
@@ -165,6 +166,8 @@ export async function createComplaint(req, res) {
 
         // The rule-based priority is a weak label; an admin override later teaches it properly
         learnFromComplaint(complaint);
+        // So the AI assistant can look the ticket up
+        saveComplaintToOrdersFile(complaint);
 
         await complaint.populate(POPULATE);
 
