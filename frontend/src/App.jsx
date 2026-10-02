@@ -176,7 +176,7 @@ export default function App() {
     }
     switch (page) {
       case "report":
-        return <ReportIssue onOpenComplaint={openComplaint} onNavigate={navigate} />;
+        return <ReportIssue user={user} onOpenComplaint={openComplaint} onNavigate={navigate} />;
       case "my-complaints":
         return <MyComplaints onOpenComplaint={openComplaint} onNavigate={navigate} />;
       case "assistant":
@@ -203,7 +203,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen w-full" style={{ backgroundColor: COLORS.bg }}>
+    <div className="flex min-h-screen w-full">
       <Sidebar
         role={role}
         user={user}
@@ -216,7 +216,7 @@ export default function App() {
 
       <div className="flex-1 min-w-0">
         <Header setMobileOpen={setMobileOpen} user={user} role={role} />
-        <main>{role === "admin" ? adminPages() : userPages()}</main>
+        <main key={`${page}-${complaintId || ""}`} className="page-enter">{role === "admin" ? adminPages() : userPages()}</main>
       </div>
     </div>
   );

@@ -1,15 +1,14 @@
 import React, { useState } from "react";
-import { Inbox, AlertOctagon, CheckCircle2, Timer, Repeat, ShieldAlert, ArrowRight, Activity } from "lucide-react";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { CheckCircle2, ArrowUpRight } from "lucide-react";
 
-import { COLORS, PRIORITY_COLORS, STATUS_COLORS } from "../../styles/tokens.js";
+import { COLORS, PRIORITY_COLORS, STATUS_COLORS, glow } from "../../styles/tokens.js";
 import { Card } from "../../components/shared/Card.jsx";
-import { StatCard } from "../../components/dashboard/StatCard.jsx";
-import { PulseDot } from "../../components/shared/PulseDot.jsx";
-import { FlairChip, PriorityBadge, RoomTypeTag } from "../../components/shared/Badges.jsx";
-import { EmptyState, ErrorBanner, PageHeader, Skeleton, SkeletonCards } from "../../components/shared/Feedback.jsx";
-import { PRIORITIES, STATUSES } from "../../data/config.js";
-import { timeAgo, shortDay } from "../../utils/format.js";
+import { TrendChart } from "../../components/analytics/Charts.jsx";
+import { FlairIcon, RecurringTag } from "../../components/shared/Badges.jsx";
+import { ErrorBanner, PageHeader, Skeleton, SectionTitle } from "../../components/shared/Feedback.jsx";
+import { LiveIndicator } from "../../components/shared/PulseDot.jsx";
+import { PRIORITIES, STATUSES, getFlair } from "../../data/config.js";
+import { timeAgo } from "../../utils/format.js";
 import { usePolling } from "../../utils/usePolling.js";
 import { getStats, getAllComplaints } from "../../services/adminService.js";
 
@@ -37,132 +36,159 @@ export function AdminDashboard({ onSelect: onOpenComplaint, onNavigate }) {
   const k = stats?.kpis;
   const countOf = (list, key, value) => list?.find((x) => x[key] === value)?.count ?? 0;
 
+  const kpis = k
+    ? [
+        ["Open", k.open, `${k.total} reported`],
+        ["Critical open", k.criticalOpen, null, k.criticalOpen > 0 ? COLORS.critical : null],
+        ["Resolved this week", k.resolvedThisWeek],
+        ["Avg. resolution", k.avgResolutionHours != null ? `${k.avgResolutionHours}h` : "—"],
+        ["Recurring", k.recurringCount, "same room + issue"],
+      ]
+    : null;
+
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <PageHeader
-        title="Maintenance dashboard"
-        subtitle="Last 30 days · refreshes every 20 seconds"
-        action={
-          <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full" style={{ backgroundColor: COLORS.successSoft, color: COLORS.success }}>
-            <PulseDot color={COLORS.success} /> Live
-          </span>
-        }
-      />
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-6xl mx-auto space-y-8">
+      <PageHeader title="Overview" subtitle="Last 30 days" action={<LiveIndicator />} />
 
       <ErrorBanner message={error} onRetry={load} />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        {!k ? (
-          <SkeletonCards count={5} className="h-32" />
-        ) : (
-          <>
-            <StatCard icon={Inbox} label="Open complaints" value={k.open} sub={`${k.total} reported`} accent={{ fg: COLORS.primary, soft: COLORS.primarySoft }} />
-            <StatCard icon={AlertOctagon} label="Critical open" value={k.criticalOpen} accent={{ fg: COLORS.critical, soft: COLORS.criticalSoft }} />
-            <StatCard icon={CheckCircle2} label="Resolved this week" value={k.resolvedThisWeek} accent={{ fg: COLORS.success, soft: COLORS.successSoft }} />
-            <StatCard icon={Timer} label="Avg. resolution" value={k.avgResolutionHours != null ? `${k.avgResolutionHours}h` : "—"} accent={{ fg: COLORS.blue, soft: COLORS.blueSoft }} />
-            <StatCard icon={Repeat} label="Recurring" value={k.recurringCount} sub="same room + issue" accent={{ fg: COLORS.warning, soft: COLORS.warningSoft }} />
-          </>
-        )}
-      </div>
-
-      {/* Critical & unassigned */}
-      <Card className="overflow-hidden" style={{ borderColor: "#FECACA" }}>
-        <div className="flex items-center gap-2 px-5 py-3 border-b" style={{ backgroundColor: COLORS.criticalSoft, borderColor: "#FECACA" }}>
-          <ShieldAlert className="w-4 h-4" style={{ color: COLORS.critical }} />
-          <h2 className="text-sm font-semibold" style={{ color: COLORS.critical }}>Critical &amp; unassigned</h2>
-          {urgent?.length > 0 && (
-            <span className="ml-auto text-xs font-bold rounded-full px-2 py-0.5 text-white" style={{ backgroundColor: COLORS.critical }}>{urgent.length}</span>
-          )}
-        </div>
-        {urgent === null && <div className="p-5 space-y-2"><Skeleton className="h-10" /><Skeleton className="h-10" /></div>}
-        {urgent?.length === 0 && <EmptyState icon={CheckCircle2} title="Nothing critical waiting" message="Every critical complaint has a worker assigned." />}
-        {urgent?.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => onOpenComplaint(c.id)}
-            className="w-full flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3 border-b last:border-0 text-left hover:bg-red-50/50 transition"
-            style={{ borderColor: COLORS.line }}
-          >
-            <PulseDot color={COLORS.critical} />
-            <span className="font-mono text-xs font-semibold" style={{ color: COLORS.slate }}>{c.ticketNo}</span>
-            <span className="text-sm font-medium flex-1 min-w-[160px]" style={{ color: COLORS.ink }}>{c.title}</span>
-            <span className="text-xs" style={{ color: COLORS.slate }}>{c.location.roomName} · {c.location.building}</span>
-            <span className="text-xs" style={{ color: COLORS.slate }}>{timeAgo(c.createdAt)}</span>
-            <ArrowRight className="w-4 h-4" style={{ color: COLORS.slate }} />
-          </button>
+      {/* KPI strip */}
+      <Card className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 overflow-hidden">
+        {(kpis || Array.from({ length: 5 })).map((kpi, i) => (
+          <div key={i} className="px-4 py-4 border-b lg:border-b-0 sm:[&:not(:last-child)]:border-r" style={{ borderColor: COLORS.line }}>
+            {kpi ? (
+              <>
+                <div className="text-xs" style={{ color: COLORS.slate }}>{kpi[0]}</div>
+                <div className="mt-1 text-2xl font-semibold tracking-tight tabular-nums" style={{ color: kpi[3] || COLORS.ink }}>{kpi[1]}</div>
+                {kpi[2] && <div className="text-[11px] mt-0.5" style={{ color: COLORS.muted }}>{kpi[2]}</div>}
+              </>
+            ) : (
+              <Skeleton className="h-12" />
+            )}
+          </div>
         ))}
       </Card>
 
-      {/* status + priority counts */}
+      {/* Needs attention */}
+      <section>
+        <SectionTitle
+          action={
+            <button onClick={() => onNavigate("complaints")} className="inline-flex items-center gap-0.5 text-xs hover:underline" style={{ color: COLORS.slate }}>
+              Open queue <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          }
+        >
+          Critical &amp; not started{urgent?.length ? <span className="ml-1.5 tabular-nums" style={{ color: COLORS.critical }}>{urgent.length}</span> : null}
+        </SectionTitle>
+        <Card className="overflow-hidden" style={urgent?.length ? { borderColor: "rgba(239,68,68,0.35)", boxShadow: glow(COLORS.critical, 0.3) } : undefined}>
+          {urgent === null && <div className="p-4 space-y-2"><Skeleton className="h-8" /><Skeleton className="h-8" /></div>}
+          {urgent?.length === 0 && (
+            <div className="flex items-center gap-2 px-4 py-3.5 text-[13px]" style={{ color: COLORS.slate }}>
+              <CheckCircle2 className="w-4 h-4" style={{ color: COLORS.success }} /> Every critical complaint is being handled.
+            </div>
+          )}
+          {urgent?.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => onOpenComplaint(c.id)}
+              className="w-full flex items-center gap-3 px-4 h-11 border-b last:border-0 text-left hover:bg-hover transition-colors"
+              style={{ borderColor: COLORS.lineSoft }}
+            >
+              <span className="relative inline-flex w-2 h-2 shrink-0">
+                <span className="animate-ping absolute inset-0 rounded-full opacity-50" style={{ backgroundColor: COLORS.critical }} />
+                <span className="relative w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.critical }} />
+              </span>
+              <span className="font-mono text-xs w-16 shrink-0" style={{ color: COLORS.muted }}>{c.ticketNo}</span>
+              <span className="text-[13px] font-medium flex-1 truncate" style={{ color: COLORS.ink }}>{c.title}</span>
+              <span className="hidden sm:block text-xs" style={{ color: COLORS.slate }}>{c.location.roomName}</span>
+              <span className="text-xs w-14 text-right tabular-nums" style={{ color: COLORS.muted }}>{timeAgo(c.createdAt)}</span>
+            </button>
+          ))}
+        </Card>
+      </section>
+
+      {/* Distributions */}
       <div className="grid md:grid-cols-2 gap-4">
-        <CountCard title="By status" items={STATUSES.map((s) => ({ label: s, value: countOf(stats?.byStatus, "status", s), ...STATUS_COLORS[s] }))} loading={!stats} />
-        <CountCard title="By priority" items={[...PRIORITIES].reverse().map((p) => ({ label: p, value: countOf(stats?.byPriority, "priority", p), ...PRIORITY_COLORS[p] }))} loading={!stats} />
+        <Distribution
+          title="Status"
+          loading={!stats}
+          items={STATUSES.map((s) => ({ label: s, value: countOf(stats?.byStatus, "status", s), color: STATUS_COLORS[s].fg }))}
+        />
+        <Distribution
+          title="Priority"
+          loading={!stats}
+          items={[...PRIORITIES].reverse().map((p) => ({ label: p, value: countOf(stats?.byPriority, "priority", p), color: PRIORITY_COLORS[p].fg }))}
+        />
       </div>
 
-      <div className="grid lg:grid-cols-[1fr_1.2fr] gap-4">
-        {/* hotspots */}
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold" style={{ color: COLORS.ink }}>Recurring hotspots</h2>
-            <button onClick={() => onNavigate("locations")} className="text-xs font-medium hover:underline" style={{ color: COLORS.primary }}>Locations</button>
-          </div>
-          {!stats && <div className="space-y-2"><Skeleton className="h-12" /><Skeleton className="h-12" /></div>}
-          {stats?.hotspots?.length === 0 && <EmptyState icon={Activity} title="No hotspots" message="No room has the same issue reported repeatedly." />}
-          <ul className="space-y-2">
-            {stats?.hotspots?.slice(0, 6).map((h) => (
-              <li key={`${h.roomId}-${h.flair}`} className="flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2.5" style={{ borderColor: COLORS.line }}>
-                <span className="text-sm font-semibold" style={{ color: COLORS.ink }}>{h.roomName}</span>
-                <RoomTypeTag roomType={h.roomType} />
-                <FlairChip flair={h.flair} />
-                <span className="ml-auto text-sm font-bold" style={{ color: COLORS.warning }}>×{h.count}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="grid lg:grid-cols-[1.4fr_1fr] gap-4">
+        <Card className="p-4">
+          <SectionTitle>Complaints per day</SectionTitle>
+          {stats ? <TrendChart data={stats.trend} height={200} /> : <Skeleton className="h-[200px]" />}
         </Card>
 
-        {/* trend */}
-        <Card className="p-5">
-          <h2 className="text-sm font-semibold mb-3" style={{ color: COLORS.ink }}>Complaints per day</h2>
-          <div style={{ width: "100%", height: 220 }}>
-            {!stats ? (
-              <Skeleton className="h-full w-full" />
-            ) : (
-              <ResponsiveContainer>
-                <AreaChart data={stats.trend} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={COLORS.primary} stopOpacity={0.25} />
-                      <stop offset="100%" stopColor={COLORS.primary} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke={COLORS.line} vertical={false} />
-                  <XAxis dataKey="date" tickFormatter={shortDay} tick={{ fontSize: 11, fill: COLORS.slate }} axisLine={false} tickLine={false} minTickGap={20} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: COLORS.slate }} axisLine={false} tickLine={false} />
-                  <Tooltip labelFormatter={shortDay} />
-                  <Area type="monotone" dataKey="count" name="Complaints" stroke={COLORS.primary} strokeWidth={2} fill="url(#trendFill)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+        <Card className="p-4">
+          <SectionTitle
+            action={
+              <button onClick={() => onNavigate("locations")} className="inline-flex items-center gap-0.5 text-xs hover:underline" style={{ color: COLORS.slate }}>
+                Locations <ArrowUpRight className="w-3.5 h-3.5" />
+              </button>
+            }
+          >
+            Recurring hotspots
+          </SectionTitle>
+          {!stats && <div className="space-y-2"><Skeleton className="h-8" /><Skeleton className="h-8" /></div>}
+          {stats?.hotspots?.length === 0 && <p className="text-[13px] py-2" style={{ color: COLORS.slate }}>No room has the same issue reported repeatedly.</p>}
+          <ul>
+            {stats?.hotspots?.slice(0, 6).map((h) => {
+              const f = getFlair(h.flair);
+              return (
+                <li key={`${h.roomId}-${h.flair}`} className="flex items-center gap-2.5 h-10 border-b last:border-0" style={{ borderColor: COLORS.lineSoft }}>
+                  <FlairIcon name={f.icon} className="w-3.5 h-3.5 shrink-0" style={{ color: f.color }} />
+                  <span className="text-[13px] font-medium" style={{ color: COLORS.ink }}>{h.roomName}</span>
+                  <span className="text-xs truncate" style={{ color: COLORS.slate }}>{f.label}</span>
+                  <span className="ml-auto"><RecurringTag count={h.count - 1} /></span>
+                </li>
+              );
+            })}
+          </ul>
         </Card>
       </div>
     </div>
   );
 }
 
-function CountCard({ title, items, loading }) {
+/* A single stacked bar + legend — reads faster than four colored tiles */
+function Distribution({ title, items, loading }) {
+  const total = items.reduce((n, i) => n + i.value, 0);
+
   return (
-    <Card className="p-5">
-      <h2 className="text-sm font-semibold mb-3" style={{ color: COLORS.ink }}>{title}</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <Card className="p-4">
+      <SectionTitle action={<span className="text-xs tabular-nums" style={{ color: COLORS.muted }}>{loading ? "" : `${total} total`}</span>}>
+        {title}
+      </SectionTitle>
+
+      {loading ? (
+        <Skeleton className="h-2 mb-4" />
+      ) : (
+        <div className="flex h-2 rounded-full overflow-hidden gap-[2px] mb-4" style={{ backgroundColor: COLORS.lineSoft }} role="img" aria-label={`${title} distribution`}>
+          {items.filter((i) => i.value > 0).map((i) => (
+            <div key={i.label} style={{ width: `${(i.value / total) * 100}%`, backgroundColor: i.color }} title={`${i.label}: ${i.value}`} />
+          ))}
+        </div>
+      )}
+
+      <dl className="grid grid-cols-2 sm:grid-cols-4 gap-y-2">
         {items.map((i) => (
-          <div key={i.label} className="rounded-xl px-3 py-3" style={{ backgroundColor: i.bg }}>
-            <div className="text-2xl font-bold" style={{ color: i.fg }}>{loading ? "–" : i.value}</div>
-            <div className="text-xs font-medium mt-0.5" style={{ color: i.fg }}>{i.label}</div>
+          <div key={i.label}>
+            <dt className="flex items-center gap-1.5 text-xs" style={{ color: COLORS.slate }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: i.color }} />
+              {i.label}
+            </dt>
+            <dd className="text-lg font-semibold tabular-nums mt-0.5 pl-3" style={{ color: COLORS.ink }}>{loading ? "–" : i.value}</dd>
           </div>
         ))}
-      </div>
+      </dl>
     </Card>
   );
 }

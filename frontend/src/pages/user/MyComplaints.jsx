@@ -28,29 +28,25 @@ export function MyComplaints({ onOpenComplaint, onNavigate }) {
   useEffect(() => { load(); }, [status, flair]);
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-4xl mx-auto">
       <PageHeader
         title="My complaints"
-        subtitle="Track everything you've reported."
+        subtitle="Everything you've reported, newest first."
         action={<Button onClick={() => onNavigate("report")}><FilePlus2 className="w-4 h-4" /> Report issue</Button>}
       />
 
-      <div className="flex flex-wrap gap-2 mb-5">
+      <div className="flex flex-wrap items-center gap-1 mb-3">
         {["", ...STATUSES].map((s) => (
           <button
             key={s || "all"}
             onClick={() => setStatus(s)}
-            className="px-3 py-1.5 rounded-full text-sm font-medium border transition"
-            style={{
-              backgroundColor: status === s ? COLORS.primary : "white",
-              color: status === s ? "white" : COLORS.slate,
-              borderColor: status === s ? COLORS.primary : COLORS.line,
-            }}
+            className={`h-7 px-2.5 rounded-md text-[13px] font-medium transition-colors ${status === s ? "bg-surface border" : "border border-transparent hover:bg-hover"}`}
+            style={{ color: status === s ? COLORS.ink : COLORS.slate, borderColor: status === s ? COLORS.line : "transparent" }}
           >
             {s || "All"}
           </button>
         ))}
-        <select className={`${inputClass} !w-auto ml-auto`} style={inputStyle} value={flair} onChange={(e) => setFlair(e.target.value)} aria-label="Filter by issue type">
+        <select className={`${inputClass} !w-auto !h-8 ml-auto`} style={inputStyle} value={flair} onChange={(e) => setFlair(e.target.value)} aria-label="Filter by issue type">
           <option value="">All issue types</option>
           {FLAIRS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
         </select>
@@ -58,22 +54,22 @@ export function MyComplaints({ onOpenComplaint, onNavigate }) {
 
       <ErrorBanner message={error} onRetry={load} />
 
-      <div className="grid md:grid-cols-2 gap-3 mt-3">
-        {complaints === null && <SkeletonCards count={4} className="h-36" />}
+      <Card className="overflow-hidden divide-y mt-3">
+        {complaints === null && <div className="p-4 space-y-3"><SkeletonCards count={4} className="h-10" /></div>}
         {complaints?.map((c) => (
           <ComplaintCard key={c.id} complaint={c} onClick={() => onOpenComplaint(c.id)} />
         ))}
-      </div>
 
       {complaints?.length === 0 && !error && (
-        <Card>
+        <>
           <EmptyState
             icon={Inbox}
             title={status || flair ? "No complaints match these filters" : "No complaints yet"}
             message={status || flair ? "Try a different filter." : "Report an issue and it'll show up here."}
           />
-        </Card>
+        </>
       )}
+      </Card>
     </div>
   );
 }

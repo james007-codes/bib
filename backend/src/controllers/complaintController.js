@@ -10,7 +10,6 @@ import { fileUrl, cleanupFiles } from "../middleware/uploadMiddleware.js";
 
 const POPULATE = [
     { path: "reportedBy", select: "name email" },
-    { path: "assignedWorker", select: "name" },
 ];
 
 const bad = (res, message, status = 400) => res.status(status).json({ success: false, message });
@@ -53,7 +52,8 @@ export async function previewPriority(req, res) {
 
 /* =========================
    POST /api/complaints   (multipart/form-data)
-   fields: flair, title, description, buildingId, floorId, roomId, spot?, reporterType?
+   fields: flair, title, description, buildingId, floorId, roomId, spot?
+   (reporter type + department come from the user account, not the form)
    files:  photos (1–3 images)
 ========================= */
 export async function createComplaint(req, res) {
@@ -65,7 +65,7 @@ export async function createComplaint(req, res) {
             return bad(res, "Only students/faculty accounts can report issues", 403);
         }
 
-        const { flair, title, description, buildingId, floorId, roomId, spot, reporterType } = req.body;
+        const { flair, title, description, buildingId, floorId, roomId, spot } = req.body;
 
         const errors = [];
         if (!flairById[flair]) errors.push("A valid flair is required");
@@ -101,7 +101,8 @@ export async function createComplaint(req, res) {
             matchedKeywords: detected.matchedKeywords,
             status: "Reported",
             reportedBy: req.account._id,
-            reporterType: reporterType === "Faculty" ? "Faculty" : "Student",
+            reporterType: req.account.userType || "Student",
+            reporterDepartment: req.account.department || null,
             isRecurring: recurrence.isRecurring,
             recurrenceCount: recurrence.count,
             updates: [

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Building2, ChevronDown, ChevronRight, X, ShieldAlert, Repeat, MapPinned } from "lucide-react";
 
 import { COLORS } from "../../styles/tokens.js";
@@ -10,6 +10,8 @@ import { EmptyState, ErrorBanner, PageHeader, Skeleton } from "../../components/
 import { BUILDINGS, ROOM_TYPES, getFlair } from "../../data/config.js";
 import { timeAgo } from "../../utils/format.js";
 import { getAllComplaints } from "../../services/adminService.js";
+import { usePolling } from "../../utils/usePolling.js";
+import { LiveIndicator } from "../../components/shared/PulseDot.jsx";
 
 const isOpen = (c) => c.status !== "Resolved";
 
@@ -31,17 +33,17 @@ export function Locations({ onSelect }) {
   const [expanded, setExpanded] = useState({});
   const [roomId, setRoomId] = useState(null);
 
-  const load = async () => {
-    setError("");
+  const load = async ({ silent } = {}) => {
     try {
       setComplaints(await loadAll());
+      setError("");
     } catch (e) {
       setError(e.message);
-      setComplaints([]);
+      if (!silent) setComplaints([]);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  usePolling(load, 20000);
 
   const filtered = useMemo(
     () => (complaints || []).filter((c) => !roomType || c.location.roomType === roomType),
@@ -77,21 +79,17 @@ export function Locations({ onSelect }) {
   const selectedRoom = roomId && BUILDINGS.flatMap((b) => b.floors.flatMap((f) => f.rooms.map((r) => ({ ...r, building: b.name, floor: f.name })))).find((r) => r.id === roomId);
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <PageHeader title="Locations" subtitle="Where complaints come from across campus." />
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
+      <PageHeader title="Locations" subtitle="Where complaints come from across campus." action={<LiveIndicator />} />
 
       {/* room type chips */}
-      <div className="flex flex-wrap gap-2 mb-5">
+      <div className="flex flex-wrap gap-1 mb-5">
         {["", ...ROOM_TYPES].map((t) => (
           <button
             key={t || "all"}
             onClick={() => setRoomType(t)}
-            className="px-3 py-1.5 rounded-full text-sm font-medium border transition"
-            style={{
-              backgroundColor: roomType === t ? COLORS.primary : "white",
-              color: roomType === t ? "white" : COLORS.slate,
-              borderColor: roomType === t ? COLORS.primary : COLORS.line,
-            }}
+            className={`h-7 px-2.5 rounded-md text-[13px] font-medium whitespace-nowrap transition-colors ${roomType === t ? "bg-surface border" : "border border-transparent hover:bg-hover"}`}
+            style={{ color: roomType === t ? COLORS.ink : COLORS.slate, borderColor: roomType === t ? COLORS.line : "transparent" }}
           >
             {t || "All rooms"}
           </button>
@@ -102,8 +100,8 @@ export function Locations({ onSelect }) {
 
       {!complaints && (
         <div className="grid lg:grid-cols-2 gap-4">
-          <Skeleton className="h-80 rounded-2xl" />
-          <Skeleton className="h-80 rounded-2xl" />
+          <Skeleton className="h-80 rounded-lg" />
+          <Skeleton className="h-80 rounded-lg" />
         </div>
       )}
 
@@ -119,10 +117,10 @@ export function Locations({ onSelect }) {
                 <Card key={b.id} className="overflow-hidden">
                   <button
                     onClick={() => setExpanded((e) => ({ ...e, [b.id]: !e[b.id] }))}
-                    className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 transition"
+                    className="w-full flex items-center gap-3 p-4 text-left hover:bg-hover transition"
                     aria-expanded={!!open}
                   >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: COLORS.primarySoft }}>
+                    <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ backgroundColor: COLORS.primarySoft }}>
                       <Building2 className="w-5 h-5" style={{ color: COLORS.primary }} />
                     </div>
                     <div className="flex-1">
@@ -141,7 +139,7 @@ export function Locations({ onSelect }) {
                     <div className="border-t px-4 py-3 space-y-3" style={{ borderColor: COLORS.line }}>
                       {b.floors.filter((f) => f.rooms.some(visibleRoom)).map((f) => (
                         <div key={f.id}>
-                          <div className="text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: COLORS.slate }}>{f.name}</div>
+                          <div className="text-xs font-medium mb-1.5" style={{ color: COLORS.slate }}>{f.name}</div>
                           <div className="space-y-1">
                             {f.rooms.filter(visibleRoom).map((r) => {
                               const s = byRoom[r.id];
@@ -149,7 +147,7 @@ export function Locations({ onSelect }) {
                                 <button
                                   key={r.id}
                                   onClick={() => setRoomId(r.id)}
-                                  className="w-full flex items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-slate-50 transition"
+                                  className="w-full flex items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-hover transition"
                                   style={{ backgroundColor: roomId === r.id ? COLORS.primarySoft : undefined }}
                                 >
                                   <span className="text-sm font-medium" style={{ color: COLORS.ink }}>{r.name}</span>
@@ -201,18 +199,18 @@ function RoomPanel({ room, stats, onClose, onSelect }) {
     <Card className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold" style={{ color: COLORS.ink }}>{room.name}</h2>
+          <h2 className="text-lg font-semibold tracking-tight" style={{ color: COLORS.ink }}>{room.name}</h2>
           <div className="flex items-center gap-2 mt-1 text-xs" style={{ color: COLORS.slate }}>
             <RoomTypeTag roomType={room.roomType} /> {room.floor}, {room.building}
           </div>
         </div>
-        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100" aria-label="Close room panel"><X className="w-4 h-4" /></button>
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-hover" aria-label="Close room panel"><X className="w-4 h-4" /></button>
       </div>
 
       <div className="grid grid-cols-3 gap-2 mt-4">
         {[["Total", stats?.total || 0, COLORS.ink], ["Open", stats?.open || 0, COLORS.blue], ["Critical", stats?.critical || 0, COLORS.critical]].map(([l, v, col]) => (
-          <div key={l} className="rounded-xl px-3 py-2" style={{ backgroundColor: COLORS.bg }}>
-            <div className="text-lg font-bold" style={{ color: col }}>{v}</div>
+          <div key={l} className="rounded-md px-3 py-2" style={{ backgroundColor: COLORS.bg }}>
+            <div className="text-lg font-semibold tracking-tight" style={{ color: col }}>{v}</div>
             <div className="text-xs" style={{ color: COLORS.slate }}>{l}</div>
           </div>
         ))}
@@ -222,12 +220,12 @@ function RoomPanel({ room, stats, onClose, onSelect }) {
         <p className="text-sm mt-4" style={{ color: COLORS.slate }}>No complaints for this room.</p>
       ) : (
         <>
-          <h3 className="text-sm font-semibold mt-5 mb-2" style={{ color: COLORS.ink }}>Issue breakdown</h3>
+          <h3 className="text-[13px] font-medium mt-5 mb-2" style={{ color: COLORS.ink }}>Issue breakdown</h3>
           <HBarChart data={flairData} />
 
           {recurring.length > 0 && (
             <>
-              <h3 className="text-sm font-semibold mt-5 mb-2" style={{ color: COLORS.ink }}>Recurring issues</h3>
+              <h3 className="text-[13px] font-medium mt-5 mb-2" style={{ color: COLORS.ink }}>Recurring issues</h3>
               <div className="flex flex-wrap gap-2">
                 {recurring.map(([f, n]) => (
                   <span key={f} className="inline-flex items-center gap-1.5">
@@ -239,11 +237,11 @@ function RoomPanel({ room, stats, onClose, onSelect }) {
             </>
           )}
 
-          <h3 className="text-sm font-semibold mt-5 mb-2" style={{ color: COLORS.ink }}>Recent complaints</h3>
+          <h3 className="text-[13px] font-medium mt-5 mb-2" style={{ color: COLORS.ink }}>Recent complaints</h3>
           <ul className="space-y-1">
             {items.slice(0, 6).map((c) => (
               <li key={c.id}>
-                <button onClick={() => onSelect(c.id)} className="w-full flex flex-wrap items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-slate-50 transition">
+                <button onClick={() => onSelect(c.id)} className="w-full flex flex-wrap items-center gap-2 rounded-lg px-2 py-2 text-left hover:bg-hover transition">
                   <span className="text-xs font-mono font-semibold" style={{ color: COLORS.slate }}>{c.ticketNo}</span>
                   <span className="text-sm flex-1 min-w-[120px] truncate" style={{ color: COLORS.ink }}>{c.title}</span>
                   <PriorityBadge priority={c.priority} showIcon={false} />

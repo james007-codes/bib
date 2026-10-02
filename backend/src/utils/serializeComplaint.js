@@ -1,5 +1,14 @@
+import config from "../config/complaintConfig.js";
+
+const departmentLabel = Object.fromEntries(config.departments.map((d) => [d.id, d.label]));
+
+// Legacy "Faculty" rows read as "Teacher"
+const reporterTypeOf = (t) => (t === "Faculty" ? "Teacher" : t || "Student");
+
+const departmentOf = (id) => (id ? { id, label: departmentLabel[id] ?? id } : null);
+
 // Converts a Complaint document into the exact shape the frontend expects.
-// reportedBy and assignedWorker should be populated before calling this.
+// reportedBy should be populated before calling this.
 export function serializeComplaint(doc, recurrence = null) {
     const c = typeof doc.toObject === "function" ? doc.toObject() : doc;
 
@@ -8,13 +17,16 @@ export function serializeComplaint(doc, recurrence = null) {
               id: c.reportedBy._id.toString(),
               name: c.reportedBy.name,
               email: c.reportedBy.email,
-              type: c.reporterType,
+              type: reporterTypeOf(c.reporterType),
+              department: departmentOf(c.reporterDepartment),
           }
-        : { id: c.reportedBy?.toString?.() ?? null, name: null, email: null, type: c.reporterType };
-
-    const worker = c.assignedWorker && typeof c.assignedWorker === "object" && c.assignedWorker.name
-        ? { id: c.assignedWorker._id.toString(), name: c.assignedWorker.name }
-        : null;
+        : {
+              id: c.reportedBy?.toString?.() ?? null,
+              name: null,
+              email: null,
+              type: reporterTypeOf(c.reporterType),
+              department: departmentOf(c.reporterDepartment),
+          };
 
     return {
         id: c._id.toString(),
@@ -41,7 +53,6 @@ export function serializeComplaint(doc, recurrence = null) {
         priorityOverrideReason: c.priorityOverrideReason ?? null,
         status: c.status,
         reportedBy: reporter,
-        assignedWorker: worker,
         recurrence: recurrence ?? {
             isRecurring: c.isRecurring,
             count: c.recurrenceCount,

@@ -1,46 +1,43 @@
 import React from "react";
-import { MapPin, UserCog } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { COLORS } from "../../styles/tokens.js";
-import { FlairChip, PriorityBadge, StatusPill, RecurringTag } from "../shared/Badges.jsx";
+import { FlairIcon, PriorityBadge, StatusPill, RecurringTag } from "../shared/Badges.jsx";
+import { getFlair } from "../../data/config.js";
 import { timeAgo } from "../../utils/format.js";
 
+// One row in a bordered list. Wrap several in <Card className="divide-y">.
 export function ComplaintCard({ complaint: c, onClick }) {
-  const critical = c.priority === "Critical" && c.status !== "Resolved";
+  const f = getFlair(c.flair);
 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white rounded-2xl border p-4 sm:p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition focus:outline-none focus-visible:ring-2"
-      style={{
-        borderColor: critical ? "#FECACA" : COLORS.line,
-        borderLeft: critical ? `4px solid ${COLORS.critical}` : undefined,
-        "--tw-ring-color": COLORS.primary,
-      }}
+      className="group w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-hover transition-colors focus:outline-none focus-visible:bg-hover"
     >
-      <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className="text-xs font-mono font-semibold" style={{ color: COLORS.slate }}>{c.ticketNo}</span>
-        <FlairChip flair={c.flair} />
-        {c.recurrence?.isRecurring && <RecurringTag count={c.recurrence.count} />}
-        <span className="ml-auto text-xs" style={{ color: COLORS.slate }}>{timeAgo(c.createdAt)}</span>
+      <div className="w-8 h-8 rounded-md border flex items-center justify-center shrink-0" style={{ borderColor: COLORS.line }}>
+        <FlairIcon name={f.icon} className="w-4 h-4" style={{ color: f.color }} />
       </div>
 
-      <h3 className="font-semibold text-sm sm:text-base line-clamp-1" style={{ color: COLORS.ink }}>{c.title}</h3>
-
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs" style={{ color: COLORS.slate }}>
-        <span className="inline-flex items-center gap-1">
-          <MapPin className="w-3.5 h-3.5" /> {c.location.roomName} · {c.location.building}
-        </span>
-        {c.assignedWorker && (
-          <span className="inline-flex items-center gap-1">
-            <UserCog className="w-3.5 h-3.5" /> {c.assignedWorker.name}
-          </span>
-        )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] font-medium truncate" style={{ color: COLORS.ink }}>{c.title}</span>
+          {c.recurrence?.isRecurring && <RecurringTag count={c.recurrence.count} />}
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5 text-xs" style={{ color: COLORS.muted }}>
+          <span className="font-mono">{c.ticketNo}</span>
+          <span>·</span>
+          <span className="truncate">{c.location.roomName}, {c.location.building}</span>
+          <span>·</span>
+          <span className="whitespace-nowrap">{timeAgo(c.createdAt)}</span>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mt-3">
-        <PriorityBadge priority={c.priority} raised={c.prioritySource === "keyword"} />
+      <div className="hidden sm:flex items-center gap-4 shrink-0">
+        <span className="w-20"><PriorityBadge priority={c.priority} raised={c.prioritySource === "keyword"} /></span>
         <StatusPill status={c.status} />
       </div>
+      <div className="sm:hidden"><StatusPill status={c.status} /></div>
+      <ChevronRight className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: COLORS.muted }} />
     </button>
   );
 }

@@ -4,7 +4,7 @@ import { request, toQuery } from "./apiClient.js";
    COMPLAINTS
 ========================= */
 
-// filters: status, priority, flair, buildingId, roomId, roomType, recurring, workerId, search, sort, page, limit
+// filters: status, priority, flair, buildingId, roomId, roomType, recurring, search, sort, page, limit
 export const getAllComplaints = async (filters = {}) => {
     const data = await request(`/admin/complaints${toQuery(filters)}`, {
         fallback: "Failed to load complaints",
@@ -15,16 +15,6 @@ export const getAllComplaints = async (filters = {}) => {
 export const getComplaintDetail = async (id) => {
     const data = await request(`/admin/complaints/${id}`, { fallback: "Failed to load complaint" });
     return data.complaint;
-};
-
-// Returns { complaint, warning } — warning is set when the worker is overloaded
-export const assignWorker = async (id, workerId) => {
-    const data = await request(`/admin/complaints/${id}/assign`, {
-        method: "POST",
-        body: { workerId },
-        fallback: "Failed to assign worker",
-    });
-    return { complaint: data.complaint, warning: data.warning };
 };
 
 export const updateStatus = async (id, { status, comment }) => {
@@ -53,18 +43,6 @@ export const resolveComplaint = async (id, formData) => {
         fallback: "Failed to resolve complaint",
     });
     return data.complaint;
-};
-
-/* =========================
-   WORKERS
-========================= */
-
-// With flair: only workers skilled for that flair, sorted by lowest load
-export const getWorkers = async ({ flair } = {}) => {
-    const data = await request(`/admin/workers${toQuery({ flair })}`, {
-        fallback: "Failed to load workers",
-    });
-    return data.workers;
 };
 
 /* =========================

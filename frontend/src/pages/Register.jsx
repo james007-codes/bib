@@ -5,6 +5,7 @@ import { COLORS } from "../styles/tokens.js";
 import { Card } from "../components/shared/Card.jsx";
 import { Logo, Vitals } from "../components/shared/Brand.jsx";
 import { registerUser, registerAdmin } from "../services/authService.js";
+import { USER_TYPES, DEPARTMENTS } from "../data/config.js";
 
 export function Register({ role: initialRole, onLogin, onBackToLogin }) {
     const [role, setRole] = useState(initialRole || "user");
@@ -13,6 +14,8 @@ export function Register({ role: initialRole, onLogin, onBackToLogin }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [userType, setUserType] = useState("Student");
+    const [department, setDepartment] = useState("");
 
     const [showPw, setShowPw] = useState(false);
     const [showConfirmPw, setShowConfirmPw] = useState(false);
@@ -44,6 +47,10 @@ export function Register({ role: initialRole, onLogin, onBackToLogin }) {
             errs.confirmPassword = "Please confirm your password.";
         } else if (password !== confirmPassword) {
             errs.confirmPassword = "Passwords do not match.";
+        }
+
+        if (role === "user" && !department) {
+            errs.department = "Select your department.";
         }
 
         setErrors(errs);
@@ -79,7 +86,7 @@ try {
             role: "admin",
         });
     } else {
-        data = await registerUser(name, email, password);
+        data = await registerUser(name, email, password, { userType, department });
 
         onLogin({
             ...data.user,
@@ -98,7 +105,6 @@ try {
     return (
         <div
             className="min-h-screen w-full flex items-center justify-center px-4 py-8"
-            style={{ backgroundColor: COLORS.bg }}
         >
             <div className="w-full max-w-md">
 
@@ -111,11 +117,11 @@ try {
                     </div>
                 </div>
 
-                <Card className="p-7 sm:p-8">
+                <Card className="p-7 sm:p-8" style={{ boxShadow: "0 0 0 1px rgba(124,108,242,0.18), 0 30px 80px -24px rgba(124,108,242,0.45)" }}>
 
                     {/* Role Selector */}
                     <div
-                        className="flex mb-6 rounded-xl p-1"
+                        className="flex mb-6 rounded-md p-1"
                         style={{ backgroundColor: COLORS.bg }}
                     >
                         <button
@@ -133,7 +139,7 @@ try {
                                         : COLORS.slate,
                             }}
                         >
-                            Student / Faculty
+                            Student / Teacher
                         </button>
 
                         <button
@@ -170,7 +176,7 @@ try {
                         style={{ color: COLORS.slate }}
                     >
                         {role === "admin"
-                            ? "Register a FixFlow maintenance admin account."
+                            ? "Register an XIE maintenance admin account."
                             : "Students and faculty: report campus issues in under a minute."}
                     </p>
 
@@ -178,7 +184,7 @@ try {
                     {authError && (
                         <div
                             role="alert"
-                            className="mb-5 flex items-start gap-2 rounded-xl px-3.5 py-3 text-sm"
+                            className="mb-5 flex items-start gap-2 rounded-md px-3.5 py-3 text-sm"
                             style={{
                                 backgroundColor: COLORS.criticalSoft,
                                 color: COLORS.critical,
@@ -208,7 +214,7 @@ try {
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="John Doe"
                                 aria-invalid={!!errors.name}
-                                className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
+                                className="w-full rounded-md border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
                                 style={{
                                     borderColor: errors.name
                                         ? COLORS.critical
@@ -227,6 +233,73 @@ try {
                             )}
                         </div>
 
+                        {/* Student / Teacher + department (user accounts only) */}
+                        {role === "user" && (
+                            <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <span
+                                        className="block text-sm font-medium mb-1.5"
+                                        style={{ color: COLORS.ink }}
+                                    >
+                                        I am a
+                                    </span>
+                                    <div
+                                        className="flex rounded-md p-1 border"
+                                        style={{ borderColor: COLORS.line }}
+                                        role="group"
+                                        aria-label="Account type"
+                                    >
+                                        {USER_TYPES.map((t) => (
+                                            <button
+                                                key={t}
+                                                type="button"
+                                                onClick={() => setUserType(t)}
+                                                aria-pressed={userType === t}
+                                                className="flex-1 rounded py-1.5 text-sm font-medium transition"
+                                                style={{
+                                                    backgroundColor: userType === t ? COLORS.primary : "transparent",
+                                                    color: userType === t ? "white" : COLORS.slate,
+                                                }}
+                                            >
+                                                {t}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor="department"
+                                        className="block text-sm font-medium mb-1.5"
+                                        style={{ color: COLORS.ink }}
+                                    >
+                                        Department
+                                    </label>
+                                    <select
+                                        id="department"
+                                        value={department}
+                                        onChange={(e) => setDepartment(e.target.value)}
+                                        aria-invalid={!!errors.department}
+                                        className="w-full rounded-md border px-3 py-2.5 text-sm outline-none focus:ring-2 transition bg-transparent"
+                                        style={{
+                                            borderColor: errors.department ? COLORS.critical : COLORS.line,
+                                            "--tw-ring-color": COLORS.primary,
+                                        }}
+                                    >
+                                        <option value="">Select department</option>
+                                        {DEPARTMENTS.map((d) => (
+                                            <option key={d.id} value={d.id}>{d.label}</option>
+                                        ))}
+                                    </select>
+                                    {errors.department && (
+                                        <p className="mt-1.5 text-xs" style={{ color: COLORS.critical }}>
+                                            {errors.department}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Email */}
                         <div className="mb-4">
                             <label
@@ -244,7 +317,7 @@ try {
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="you@college.edu"
                                 aria-invalid={!!errors.email}
-                                className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
+                                className="w-full rounded-md border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
                                 style={{
                                     borderColor: errors.email
                                         ? COLORS.critical
@@ -283,7 +356,7 @@ try {
                                     }
                                     placeholder="••••••••"
                                     aria-invalid={!!errors.password}
-                                    className="w-full rounded-xl border px-3.5 py-2.5 pr-10 text-sm outline-none focus:ring-2 transition"
+                                    className="w-full rounded-md border px-3.5 py-2.5 pr-10 text-sm outline-none focus:ring-2 transition"
                                     style={{
                                         borderColor: errors.password
                                             ? COLORS.critical
@@ -297,7 +370,7 @@ try {
                                     onClick={() =>
                                         setShowPw((v) => !v)
                                     }
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
                                     aria-label={
                                         showPw
                                             ? "Hide password"
@@ -348,7 +421,7 @@ try {
                                     aria-invalid={
                                         !!errors.confirmPassword
                                     }
-                                    className="w-full rounded-xl border px-3.5 py-2.5 pr-10 text-sm outline-none focus:ring-2 transition"
+                                    className="w-full rounded-md border px-3.5 py-2.5 pr-10 text-sm outline-none focus:ring-2 transition"
                                     style={{
                                         borderColor:
                                             errors.confirmPassword
@@ -363,7 +436,7 @@ try {
                                     onClick={() =>
                                         setShowConfirmPw((v) => !v)
                                     }
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
                                     aria-label={
                                         showConfirmPw
                                             ? "Hide password"
@@ -392,7 +465,7 @@ try {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition disabled:opacity-70"
+                            className="w-full flex items-center justify-center gap-2 rounded-md py-2.5 text-sm font-semibold text-white transition disabled:opacity-70"
                             style={{
                                 backgroundColor: COLORS.primary,
                             }}

@@ -10,4 +10,12 @@ export function PulseDot({ color = COLORS.critical }) {
   );
 }
 
+export function LiveIndicator({ label = "Live" }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: COLORS.slate }} title="Refreshes every 20 seconds">
+      <PulseDot color={COLORS.success} /> {label}
+    </span>
+  );
+}
+
 export default PulseDot;

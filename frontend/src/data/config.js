@@ -10,6 +10,11 @@ export const FLAIRS = config.flairs;
 export const ESCALATION_KEYWORDS = config.escalationKeywords;
 export const ROOM_TYPES = config.roomTypes;
 export const BUILDINGS = config.buildings;
+export const INSTITUTION = config.institution;
+export const USER_TYPES = config.userTypes;
+export const DEPARTMENTS = config.departments;
+
+export const departmentLabel = (id) => DEPARTMENTS.find((d) => d.id === id)?.label || null;
 
 export const flairById = Object.fromEntries(FLAIRS.map((f) => [f.id, f]));
 export const groupById = Object.fromEntries(FLAIR_GROUPS.map((g) => [g.id, g]));

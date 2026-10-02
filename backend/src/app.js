@@ -13,7 +13,8 @@ import { UPLOAD_DIR } from "./middleware/uploadMiddleware.js";
 const app = express();
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        // Any local dev port (Vite moves to 5174+ when 5173 is busy)
+        origin: /^http:\/\/(localhost|127\.0\.0\.1):\d+$/,
         credentials: true,
     })
 );

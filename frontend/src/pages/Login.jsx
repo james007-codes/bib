@@ -97,7 +97,6 @@ const handleSubmit = async (e) => {
     return (
         <div
             className="min-h-screen w-full flex items-center justify-center px-4"
-            style={{ backgroundColor: COLORS.bg }}
         >
             <div className="w-full max-w-md">
 
@@ -110,11 +109,11 @@ const handleSubmit = async (e) => {
                     </div>
                 </div>
 
-                <Card className="p-7 sm:p-8">
+                <Card className="p-7 sm:p-8" style={{ boxShadow: "0 0 0 1px rgba(124,108,242,0.18), 0 30px 80px -24px rgba(124,108,242,0.45)" }}>
 
                     {/* Role Selector */}
                     <div
-                        className="flex mb-6 rounded-xl p-1"
+                        className="flex mb-6 rounded-md p-1"
                         style={{ backgroundColor: COLORS.bg }}
                     >
                         <button
@@ -152,7 +151,7 @@ const handleSubmit = async (e) => {
                                         : COLORS.slate,
                             }}
                         >
-                            Student / Faculty
+                            Student / Teacher
                         </button>
                     </div>
 
@@ -171,7 +170,7 @@ const handleSubmit = async (e) => {
                         style={{ color: COLORS.slate }}
                     >
                         {role === "admin"
-                            ? "Sign in to triage, assign and resolve campus complaints."
+                            ? "Sign in to triage, update and resolve campus complaints."
                             : "Sign in to report issues and track their progress."}
                     </p>
 
@@ -179,7 +178,7 @@ const handleSubmit = async (e) => {
                     {authError && (
                         <div
                             role="alert"
-                            className="mb-5 flex items-start gap-2 rounded-xl px-3.5 py-3 text-sm"
+                            className="mb-5 flex items-start gap-2 rounded-md px-3.5 py-3 text-sm"
                             style={{
                                 backgroundColor: COLORS.criticalSoft,
                                 color: COLORS.critical,
@@ -220,7 +219,7 @@ const handleSubmit = async (e) => {
                                         ? "admin@college.edu"
                                         : "you@college.edu"
                                 }
-                                className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
+                                className="w-full rounded-md border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
                                 style={{
                                     borderColor: errors.email
                                         ? COLORS.critical
@@ -269,7 +268,7 @@ const handleSubmit = async (e) => {
                                             : undefined
                                     }
                                     placeholder="••••••••"
-                                    className="w-full rounded-xl border px-3.5 py-2.5 pr-10 text-sm outline-none focus:ring-2 transition"
+                                    className="w-full rounded-md border px-3.5 py-2.5 pr-10 text-sm outline-none focus:ring-2 transition"
                                     style={{
                                         borderColor: errors.password
                                             ? COLORS.critical
@@ -289,7 +288,7 @@ const handleSubmit = async (e) => {
                                             ? "Hide password"
                                             : "Show password"
                                     }
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
                                 >
                                     {showPw ? (
                                         <EyeOff className="w-4 h-4" />
@@ -349,7 +348,7 @@ const handleSubmit = async (e) => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition disabled:opacity-70"
+                            className="w-full flex items-center justify-center gap-2 rounded-md py-2.5 text-sm font-semibold text-white transition disabled:opacity-70"
                             style={{
                                 backgroundColor: COLORS.primary,
                             }}
@@ -372,7 +371,7 @@ const handleSubmit = async (e) => {
         className="text-xs"
         style={{ color: COLORS.slate }}
     >
-        Don&apos;t have a FixFlow account?
+        Don&apos;t have a CampusCare account?
     </p>
 
     <button

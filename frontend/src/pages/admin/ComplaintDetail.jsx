@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, MapPin, User, Loader2, AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
+import { ArrowLeft, MapPin, User, Loader2, AlertTriangle, CheckCircle2, Pencil, MessageSquare, Play, Siren } from "lucide-react";
 
-import { COLORS } from "../../styles/tokens.js";
+import { COLORS, STATUS_COLORS } from "../../styles/tokens.js";
 import { Card } from "../../components/shared/Card.jsx";
 import { ConfirmDialog } from "../../components/shared/ConfirmDialog.jsx";
 import { Button, ErrorBanner, Skeleton, inputClass, inputStyle } from "../../components/shared/Feedback.jsx";
-import { FlairChip, PriorityBadge, StatusPill, RoomTypeTag, WorkerStatusPill } from "../../components/shared/Badges.jsx";
+import { FlairChip, PriorityBadge, StatusPill, RoomTypeTag } from "../../components/shared/Badges.jsx";
 import { StatusStepper } from "../../components/complaints/StatusStepper.jsx";
 import { UpdateTimeline } from "../../components/complaints/UpdateTimeline.jsx";
 import { PhotoGallery } from "../../components/complaints/PhotoGallery.jsx";
@@ -15,7 +15,7 @@ import { RecurrencePanel } from "../../components/complaints/RecurrencePanel.jsx
 import { PRIORITIES } from "../../data/config.js";
 import { formatDateTime } from "../../utils/format.js";
 import {
-  getComplaintDetail, getWorkers, assignWorker, updateStatus, overridePriority, resolveComplaint,
+  getComplaintDetail, updateStatus, overridePriority, resolveComplaint,
 } from "../../services/adminService.js";
 
 export function ComplaintDetail({ id, onBack }) {
@@ -40,7 +40,7 @@ export function ComplaintDetail({ id, onBack }) {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-6xl mx-auto space-y-4">
       <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline" style={{ color: COLORS.primary }}>
         <ArrowLeft className="w-4 h-4" /> All complaints
       </button>
@@ -49,8 +49,8 @@ export function ComplaintDetail({ id, onBack }) {
 
       {!c && !error && (
         <div className="grid lg:grid-cols-[1fr_380px] gap-4">
-          <Skeleton className="h-96 rounded-2xl" />
-          <Skeleton className="h-96 rounded-2xl" />
+          <Skeleton className="h-96 rounded-lg" />
+          <Skeleton className="h-96 rounded-lg" />
         </div>
       )}
 
@@ -59,7 +59,7 @@ export function ComplaintDetail({ id, onBack }) {
           {notice && (
             <div
               role="status"
-              className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium"
+              className="flex items-center gap-2 rounded-md px-4 py-3 text-sm font-medium"
               style={notice.type === "warning"
                 ? { backgroundColor: COLORS.warningSoft, color: COLORS.warning }
                 : { backgroundColor: COLORS.successSoft, color: COLORS.success }}
@@ -72,13 +72,13 @@ export function ComplaintDetail({ id, onBack }) {
           <div className="grid lg:grid-cols-[1fr_380px] gap-4 items-start">
             {/* ================= LEFT ================= */}
             <div className="space-y-4 min-w-0">
-              <Card className="p-5 sm:p-6" style={c.priority === "Critical" && c.status !== "Resolved" ? { borderLeft: `4px solid ${COLORS.critical}`, borderColor: "#FECACA" } : undefined}>
+              <Card className="p-5" style={c.priority === "Critical" && c.status !== "Resolved" ? { borderLeft: `4px solid ${COLORS.critical}`, borderColor: "rgba(239,68,68,0.35)" } : undefined}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-mono font-semibold" style={{ color: COLORS.slate }}>{c.ticketNo}</span>
                   <FlairChip flair={c.flair} />
                   <StatusPill status={c.status} />
                 </div>
-                <h1 className="text-lg sm:text-xl font-bold mt-3" style={{ color: COLORS.ink }}>{c.title}</h1>
+                <h1 className="text-lg font-semibold tracking-tight mt-3" style={{ color: COLORS.ink }}>{c.title}</h1>
                 <div className="flex flex-wrap items-center gap-2 mt-2 text-sm" style={{ color: COLORS.slate }}>
                   <MapPin className="w-4 h-4" />
                   {c.location.roomName} · {c.location.floor}, {c.location.building}
@@ -87,7 +87,7 @@ export function ComplaintDetail({ id, onBack }) {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-1 text-sm" style={{ color: COLORS.slate }}>
                   <User className="w-4 h-4" />
-                  {c.reportedBy?.name || "Unknown"} ({c.reportedBy?.type}) · {formatDateTime(c.createdAt)}
+                  {c.reportedBy?.name || "Unknown"} · {c.reportedBy?.type}{c.reportedBy?.department ? ` · ${c.reportedBy.department.label}` : ""} · {formatDateTime(c.createdAt)}
                 </div>
 
                 <p className="text-sm whitespace-pre-wrap mt-4" style={{ color: COLORS.ink }}>{c.description}</p>
@@ -98,7 +98,7 @@ export function ComplaintDetail({ id, onBack }) {
               <Card className="p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-sm font-semibold mb-2" style={{ color: COLORS.ink }}>Priority</h2>
+                    <h2 className="text-[13px] font-medium mb-2" style={{ color: COLORS.ink }}>Priority</h2>
                     <div className="flex items-center gap-2 mb-1.5">
                       <PriorityBadge priority={c.priority} raised={c.prioritySource === "keyword"} />
                     </div>
@@ -109,13 +109,13 @@ export function ComplaintDetail({ id, onBack }) {
               </Card>
 
               <Card className="p-5">
-                <h2 className="text-sm font-semibold mb-3" style={{ color: COLORS.ink }}>Recurrence history</h2>
+                <h2 className="text-[13px] font-medium mb-3" style={{ color: COLORS.ink }}>Recurrence history</h2>
                 <RecurrencePanel recurrence={c.recurrence} roomName={c.location.roomName} />
               </Card>
 
               {c.resolution && (
-                <Card className="p-5" style={{ borderColor: "#A7F3D0", backgroundColor: COLORS.successSoft }}>
-                  <h2 className="text-sm font-semibold mb-2" style={{ color: COLORS.success }}>Resolved {formatDateTime(c.resolution.resolvedAt)}</h2>
+                <Card className="p-5" style={{ borderColor: "rgba(34,197,94,0.3)", backgroundColor: COLORS.successSoft }}>
+                  <h2 className="text-[13px] font-medium mb-2" style={{ color: COLORS.success }}>Resolved {formatDateTime(c.resolution.resolvedAt)}</h2>
                   <p className="text-sm whitespace-pre-wrap" style={{ color: COLORS.ink }}>{c.resolution.note}</p>
                   {c.resolution.afterPhoto && <div className="mt-3"><PhotoGallery photos={[c.resolution.afterPhoto]} /></div>}
                 </Card>
@@ -126,12 +126,11 @@ export function ComplaintDetail({ id, onBack }) {
             <div className="space-y-4 lg:sticky lg:top-20">
               <Card className="p-5"><StatusStepper status={c.status} /></Card>
 
-              {c.status !== "Resolved" && <AssignPanel complaint={c} onUpdated={onUpdated} />}
-              {(c.status === "Assigned" || c.status === "In Progress") && <StatusPanel complaint={c} onUpdated={onUpdated} />}
-              {c.status === "In Progress" && <ResolvePanel complaint={c} onUpdated={onUpdated} />}
+              {c.status !== "Resolved" && <UpdatePanel complaint={c} onUpdated={onUpdated} />}
+              {c.status !== "Resolved" && <ResolvePanel complaint={c} onUpdated={onUpdated} />}
 
               <Card className="p-5">
-                <h2 className="text-sm font-semibold mb-4" style={{ color: COLORS.ink }}>Timeline</h2>
+                <h2 className="text-[13px] font-medium mb-4" style={{ color: COLORS.ink }}>Timeline</h2>
                 <UpdateTimeline updates={c.updates} />
               </Card>
             </div>
@@ -143,112 +142,32 @@ export function ComplaintDetail({ id, onBack }) {
 }
 
 /* =========================
-   ASSIGN WORKER
+   UPDATE — status + comment (the admin drives the workflow, no workers)
 ========================= */
 
-function AssignPanel({ complaint: c, onUpdated }) {
-  const [workers, setWorkers] = useState(null);
-  const [workerId, setWorkerId] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+const ACTIONS = [
+  { key: "comment", label: "Comment", icon: MessageSquare, status: null },
+  { key: "progress", label: "In progress", icon: Play, status: "In Progress" },
+  { key: "escalate", label: "Escalate", icon: Siren, status: "Escalated" },
+];
 
-  useEffect(() => {
-    getWorkers({ flair: c.flair })
-      .then(setWorkers)
-      .catch((e) => { setError(e.message); setWorkers([]); });
-  }, [c.flair, c.assignedWorker?.id]);
-
-  const selected = workers?.find((w) => w.id === workerId);
-
-  const submit = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      const { complaint, warning } = await assignWorker(c.id, workerId);
-      setWorkerId("");
-      onUpdated(complaint, warning ? { type: "warning", text: warning } : { type: "success", text: `Assigned to ${complaint.assignedWorker?.name}.` });
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Card className="p-5">
-      <h2 className="text-sm font-semibold mb-1" style={{ color: COLORS.ink }}>{c.assignedWorker ? "Reassign worker" : "Assign worker"}</h2>
-      {c.assignedWorker && <p className="text-xs mb-3" style={{ color: COLORS.slate }}>Currently: <b>{c.assignedWorker.name}</b></p>}
-      {!c.assignedWorker && <p className="text-xs mb-3" style={{ color: COLORS.slate }}>Skilled workers, least busy first.</p>}
-
-      {workers === null ? (
-        <Skeleton className="h-10 w-full" />
-      ) : workers.length === 0 ? (
-        <p className="text-sm" style={{ color: COLORS.slate }}>No workers have the skills for this issue type.</p>
-      ) : (
-        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-          {workers.map((w) => {
-            const off = w.status === "Off Duty";
-            const current = w.id === c.assignedWorker?.id;
-            const active = workerId === w.id;
-            return (
-              <button
-                key={w.id}
-                type="button"
-                disabled={off || current}
-                onClick={() => setWorkerId(w.id)}
-                className="w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ borderColor: active ? COLORS.primary : COLORS.line, backgroundColor: active ? COLORS.primarySoft : undefined }}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate" style={{ color: COLORS.ink }}>{w.name}{current && " (current)"}</div>
-                  <div className="text-xs" style={{ color: w.overloaded ? COLORS.warning : COLORS.slate }}>
-                    {w.activeCount} active task{w.activeCount === 1 ? "" : "s"}{w.overloaded && " · overloaded"}
-                  </div>
-                </div>
-                <LoadBar value={w.activeCount} />
-                <WorkerStatusPill status={w.status} />
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {error && <p className="text-xs mt-2" style={{ color: COLORS.critical }}>{error}</p>}
-
-      <Button className="w-full mt-3" disabled={!selected || busy} onClick={submit}>
-        {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-        {selected ? `Assign to ${selected.name}` : "Select a worker"}
-      </Button>
-    </Card>
-  );
-}
-
-function LoadBar({ value, max = 5 }) {
-  const pct = Math.min(100, (value / max) * 100);
-  const color = value >= max ? COLORS.critical : value >= 3 ? COLORS.warning : COLORS.success;
-  return (
-    <div className="w-14 h-1.5 rounded-full shrink-0" style={{ backgroundColor: COLORS.line }} aria-hidden="true">
-      <div className="h-full rounded-full" style={{ width: `${Math.max(pct, 6)}%`, backgroundColor: color }} />
-    </div>
-  );
-}
-
-/* =========================
-   STATUS UPDATE / PROGRESS NOTE
-========================= */
-
-function StatusPanel({ complaint: c, onUpdated }) {
-  const canStart = c.status === "Assigned";
-  const [mode, setMode] = useState(canStart ? "start" : "note");
+function UpdatePanel({ complaint: c, onUpdated }) {
+  // Hide the action that matches the current status (e.g. no "In progress" when already in progress)
+  const actions = ACTIONS.filter((a) => a.status !== c.status);
+  const [mode, setMode] = useState(c.status === "Reported" ? "progress" : "comment");
   const [comment, setComment] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => setMode(canStart ? "start" : "note"), [canStart]);
+  useEffect(() => {
+    if (!actions.some((a) => a.key === mode)) setMode("comment");
+  }, [c.status]);
 
-  const status = mode === "start" ? "In Progress" : c.status;
-  const valid = mode === "start" || comment.trim();
+  const action = ACTIONS.find((a) => a.key === mode) || ACTIONS[0];
+  const status = action.status || c.status;
+  const changesStatus = status !== c.status;
+  const valid = changesStatus || comment.trim();
 
   const submit = async () => {
     setConfirm(false);
@@ -257,7 +176,10 @@ function StatusPanel({ complaint: c, onUpdated }) {
     try {
       const complaint = await updateStatus(c.id, { status, comment: comment.trim() });
       setComment("");
-      onUpdated(complaint, { type: "success", text: mode === "start" ? "Marked as In Progress." : "Update posted." });
+      onUpdated(complaint, {
+        type: status === "Escalated" ? "warning" : "success",
+        text: changesStatus ? `Marked as ${status}. The reporter can see this update.` : "Comment posted to the reporter's timeline.",
+      });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -265,46 +187,73 @@ function StatusPanel({ complaint: c, onUpdated }) {
     }
   };
 
+  const placeholder = {
+    comment: "Write an update for the reporter, e.g. Spare part ordered, arriving tomorrow",
+    progress: "Optional note, e.g. Electrician will check it this afternoon",
+    escalate: "Why is it escalated? e.g. Needs an outside vendor / principal's approval",
+  }[mode];
+
   return (
     <Card className="p-5">
-      <h2 className="text-sm font-semibold mb-3" style={{ color: COLORS.ink }}>Update status</h2>
+      <h2 className="text-[13px] font-medium mb-3" style={{ color: COLORS.ink }}>Post an update</h2>
 
-      {canStart && (
-        <div className="inline-flex rounded-lg p-1 mb-3" style={{ backgroundColor: COLORS.graySoft }}>
-          {[["start", "Start work"], ["note", "Progress note"]].map(([k, l]) => (
+      <div className="grid grid-cols-3 gap-1 rounded-md p-1 mb-3" style={{ backgroundColor: COLORS.lineSoft }} role="group" aria-label="Update type">
+        {ACTIONS.map((a) => {
+          const Icon = a.icon;
+          const disabled = !actions.includes(a);
+          const active = mode === a.key;
+          const tint = a.key === "escalate" ? STATUS_COLORS.Escalated.fg : COLORS.ink;
+          return (
             <button
-              key={k}
-              onClick={() => setMode(k)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${mode === k ? "bg-white shadow-sm" : ""}`}
-              style={{ color: mode === k ? COLORS.ink : COLORS.slate }}
+              key={a.key}
+              type="button"
+              disabled={disabled}
+              onClick={() => setMode(a.key)}
+              aria-pressed={active}
+              className="inline-flex items-center justify-center gap-1.5 h-8 rounded text-xs font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: active ? COLORS.surface2 : "transparent",
+                color: active ? tint : COLORS.slate,
+                boxShadow: active ? "inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(0,0,0,.5)" : "none",
+              }}
+              title={disabled ? `Already ${a.status}` : undefined}
             >
-              {l}
+              <Icon className="w-3.5 h-3.5" /> {a.label}
             </button>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       <textarea
-        className={`${inputClass} min-h-[80px]`}
+        className={`${inputClass} min-h-[88px] py-2`}
         style={inputStyle}
-        placeholder={mode === "start" ? "Optional note, e.g. Electrician on the way" : "e.g. Spare part ordered, arriving tomorrow"}
+        placeholder={placeholder}
         value={comment}
         maxLength={1000}
         onChange={(e) => setComment(e.target.value)}
       />
+      <p className="text-[11px] mt-1.5" style={{ color: COLORS.muted }}>
+        {changesStatus ? `Status will change: ${c.status} → ${status}. Comment is optional.` : "Status stays the same. The comment is shown on the reporter's timeline."}
+      </p>
 
       {error && <p className="text-xs mt-2" style={{ color: COLORS.critical }}>{error}</p>}
 
-      <Button className="w-full mt-3" disabled={!valid || busy} onClick={() => (mode === "start" ? setConfirm(true) : submit())}>
+      <Button
+        className="w-full mt-3"
+        variant={mode === "escalate" ? "danger" : "primary"}
+        disabled={!valid || busy}
+        onClick={() => (changesStatus ? setConfirm(true) : submit())}
+      >
         {busy && <Loader2 className="w-4 h-4 animate-spin" />}
-        {mode === "start" ? "Move to In Progress" : "Post update"}
+        {mode === "comment" ? "Post comment" : mode === "progress" ? "Mark in progress" : "Escalate"}
       </Button>
 
       <ConfirmDialog
         open={confirm}
-        title="Start work"
-        message={`Move ${c.ticketNo} to In Progress? The reporter will see this update.`}
-        confirmLabel="Move to In Progress"
+        title={mode === "escalate" ? "Escalate complaint" : "Mark in progress"}
+        message={`Move ${c.ticketNo} from ${c.status} to ${status}? The reporter will see this update.`}
+        confirmLabel={mode === "escalate" ? "Escalate" : "Mark in progress"}
+        danger={mode === "escalate"}
         onConfirm={submit}
         onCancel={() => setConfirm(false)}
       />
@@ -342,7 +291,7 @@ function ResolvePanel({ complaint: c, onUpdated }) {
 
   return (
     <Card className="p-5">
-      <h2 className="text-sm font-semibold mb-3" style={{ color: COLORS.ink }}>Resolve</h2>
+      <h2 className="text-[13px] font-medium mb-3" style={{ color: COLORS.ink }}>Resolve</h2>
       <textarea
         className={`${inputClass} min-h-[80px]`}
         style={inputStyle}
@@ -409,7 +358,7 @@ function PriorityOverride({ complaint: c, onUpdated }) {
   };
 
   return (
-    <div className="w-full space-y-2 rounded-xl p-3" style={{ backgroundColor: COLORS.bg }}>
+    <div className="w-full space-y-2 rounded-md p-3" style={{ backgroundColor: COLORS.bg }}>
       <div className="flex flex-wrap gap-2">
         {PRIORITIES.map((p) => (
           <button key={p} onClick={() => setPriority(p)} className="rounded-full transition" style={{ outline: priority === p ? `2px solid ${COLORS.primary}` : "none", outlineOffset: 2 }}>

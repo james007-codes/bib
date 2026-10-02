@@ -210,7 +210,7 @@ export function AIAssistant() {
   return (
     <div className="p-4 sm:p-6">
       <section
-        className="rounded-2xl border overflow-hidden bg-white"
+        className="rounded-lg border overflow-hidden bg-surface"
         style={{
           borderColor: COLORS.line,
         }}
@@ -230,7 +230,7 @@ export function AIAssistant() {
           <div className="flex items-center gap-3">
 
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              className="w-10 h-10 rounded-md flex items-center justify-center"
               style={{
                 backgroundColor:
                   COLORS.primarySoft,
@@ -246,12 +246,12 @@ export function AIAssistant() {
 
             <div>
               <h2
-                className="text-base font-semibold"
+                className="text-[15px] font-semibold tracking-tight"
                 style={{
                   color: COLORS.ink,
                 }}
               >
-                FixFlow Assistant
+                CampusCare Assistant
               </h2>
 
               <p
@@ -299,7 +299,7 @@ export function AIAssistant() {
           >
 
             <div
-              className="px-4 py-3 text-xs font-semibold uppercase tracking-wide"
+              className="px-4 py-3 text-xs font-medium"
               style={{
                 color: COLORS.slate,
               }}
@@ -342,7 +342,7 @@ export function AIAssistant() {
                       disabled={
                         loadingMessages
                       }
-                      className="w-full flex items-start gap-3 px-3 py-3 rounded-xl text-left mb-1 transition hover:bg-slate-50"
+                      className="w-full flex items-start gap-3 px-3 py-3 rounded-md text-left mb-1 transition hover:bg-hover"
                       style={{
                         backgroundColor:
                           active
@@ -426,7 +426,7 @@ export function AIAssistant() {
                         COLORS.ink,
                     }}
                   >
-                    FixFlow Assistant
+                    CampusCare Assistant
                   </h3>
 
                   <p
@@ -444,7 +444,7 @@ export function AIAssistant() {
                     onClick={
                       handleNewChat
                     }
-                    className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white"
+                    className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium text-white"
                     style={{
                       backgroundColor:
                         COLORS.primary,
@@ -519,10 +519,10 @@ export function AIAssistant() {
                                 key={s}
                                 onClick={() => handleSend(null, s)}
                                 disabled={loading}
-                                className="px-3 py-1.5 rounded-full text-xs font-medium border transition hover:bg-indigo-50 disabled:opacity-50"
+                                className="h-7 px-2.5 rounded-md text-xs border transition-colors hover:bg-hover disabled:opacity-50"
                                 style={{
                                   borderColor: COLORS.line,
-                                  color: COLORS.primary,
+                                  color: COLORS.ink,
                                 }}
                               >
                                 {s}
@@ -554,7 +554,7 @@ export function AIAssistant() {
                         >
 
                           <div
-                            className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-6"
+                            className="max-w-[80%] rounded-lg px-4 py-3 text-sm leading-6"
                             style={{
                               backgroundColor:
                                 isUser
@@ -631,7 +631,7 @@ export function AIAssistant() {
                                   h2: ({
                                     children,
                                   }) => (
-                                    <h2 className="text-base font-semibold mb-2">
+                                    <h2 className="text-[15px] font-semibold tracking-tight mb-2">
                                       {children}
                                     </h2>
                                   ),
@@ -661,7 +661,7 @@ export function AIAssistant() {
                       <div className="flex justify-start">
 
                         <div
-                          className="rounded-2xl px-4 py-3 border"
+                          className="rounded-lg px-4 py-3 border"
                           style={{
                             borderColor:
                               COLORS.line,
@@ -712,8 +712,8 @@ export function AIAssistant() {
                         )
                       }
                       disabled={loading}
-                      placeholder="Ask FixFlow Assistant..."
-                      className="flex-1 rounded-xl border px-4 py-3 text-sm outline-none focus:ring-2"
+                      placeholder="Ask CampusCare Assistant..."
+                      className="flex-1 rounded-md border px-4 py-3 text-sm outline-none focus:ring-2"
                       style={{
                         borderColor:
                           COLORS.line,
@@ -729,7 +729,7 @@ export function AIAssistant() {
                         loading ||
                         !message.trim()
                       }
-                      className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-white disabled:opacity-50"
+                      className="w-11 h-11 shrink-0 rounded-md flex items-center justify-center text-white disabled:opacity-50"
                       style={{
                         backgroundColor:
                           COLORS.primary,

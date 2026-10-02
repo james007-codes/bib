@@ -48,7 +48,7 @@ export function PhotoDropzone({ files, onChange, max = 3, label = "Drag & drop p
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
           onDrop={(e) => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
-          className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-4 py-8 text-center cursor-pointer transition"
+          className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-8 text-center cursor-pointer transition"
           style={{
             borderColor: dragging ? COLORS.primary : COLORS.line,
             backgroundColor: dragging ? COLORS.primarySoft : COLORS.bg,
@@ -75,7 +75,7 @@ export function PhotoDropzone({ files, onChange, max = 3, label = "Drag & drop p
       {files.length > 0 && (
         <div className="flex flex-wrap gap-3 mt-3">
           {files.map((f, i) => (
-            <div key={`${f.name}-${i}`} className="relative w-24 h-24 rounded-xl overflow-hidden border" style={{ borderColor: COLORS.line }}>
+            <div key={`${f.name}-${i}`} className="relative w-24 h-24 rounded-md overflow-hidden border" style={{ borderColor: COLORS.line }}>
               {previews[i] && <img src={previews[i]} alt={f.name} className="w-full h-full object-cover" />}
               <button
                 type="button"

@@ -144,6 +144,19 @@ export function buildStats(complaints, now = new Date()) {
             })
     ).slice(0, 10);
 
+    // Who reports: department (null = not set) and Student/Teacher
+    const deptLabel = Object.fromEntries(config.departments.map((d) => [d.id, d.label]));
+    const byDepartment = sortDesc(
+        [...countBy(complaints, (c) => c.reporterDepartment || "unknown")].map(([department, count]) => ({
+            department,
+            label: deptLabel[department] ?? "Not specified",
+            count,
+        }))
+    );
+
+    const typeCounts = countBy(complaints, (c) => (c.reporterType === "Faculty" ? "Teacher" : c.reporterType || "Student"));
+    const byReporterType = config.userTypes.map((type) => ({ type, count: typeCounts.get(type) || 0 }));
+
     const trendMap = countBy(complaints, (c) => new Date(c.createdAt).toISOString().slice(0, 10));
     const trend = [...trendMap]
         .map(([date, count]) => ({ date, count }))
@@ -160,6 +173,8 @@ export function buildStats(complaints, now = new Date()) {
         topRooms,
         roomFlairMatrix,
         hotspots,
+        byDepartment,
+        byReporterType,
         trend,
     };
 }

@@ -1,9 +1,9 @@
 /**
  * Demo data seeder.
  *
- *   node src/scripts/seed.js                  -> adds workers + demo complaints (reported by the first user in the DB)
+ *   node src/scripts/seed.js                  -> adds demo complaints (reported by the first user in the DB)
  *   node src/scripts/seed.js you@mail.com     -> complaints reported by that user
- *   node src/scripts/seed.js --reset          -> WIPES complaints, workers and the ticket counter first
+ *   node src/scripts/seed.js --reset          -> WIPES complaints and the ticket counter first
  *
  * Register at least one normal user in the app before running this.
  */
@@ -11,7 +11,6 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 import User from "../models/User.js";
-import Worker from "../models/Worker.js";
 import Complaint from "../models/Complaint.js";
 import Counter, { nextSequence } from "../models/Counter.js";
 import config, { flairById, resolveLocation } from "../config/complaintConfig.js";
@@ -30,17 +29,6 @@ let s = 42;
 const rand = () => ((s = (s * 16807) % 2147483647) / 2147483647);
 const pick = (arr) => arr[Math.floor(rand() * arr.length)];
 
-const WORKERS = [
-    { name: "Ramesh Patil", phone: "9820000001", skills: ["electrical-safety", "classroom"] },
-    { name: "Suresh Yadav", phone: "9820000002", skills: ["electrical-safety"] },
-    { name: "Anil Kamble", phone: "9820000003", skills: ["water-washroom"] },
-    { name: "Vijay Shinde", phone: "9820000004", skills: ["water-washroom", "campus"] },
-    { name: "Priya Nair", phone: "9820000005", skills: ["labs-it"] },
-    { name: "Rohit Desai", phone: "9820000006", skills: ["labs-it", "classroom"] },
-    { name: "Mangesh Gawde", phone: "9820000007", skills: ["canteen", "campus"] },
-    { name: "Sunita More", phone: "9820000008", skills: ["campus", "classroom"], status: "Off Duty" },
-];
-
 // [daysAgo, roomId, flair, title, description, finalStatus]
 const SCRIPTED = [
     // Demo story: LH-204 electrical issue already reported twice this month
@@ -51,7 +39,7 @@ const SCRIPTED = [
     [85, "a-1-wr", "plumbing", "Tap leaking in washroom", "Second tap from the left keeps dripping.", "Resolved"],
     [57, "a-1-wr", "plumbing", "Same tap leaking again", "The tap that was fixed last month is leaking again.", "Resolved"],
     [29, "a-1-wr", "plumbing", "Tap leak back again", "Water dripping all day from the same tap.", "Resolved"],
-    [3, "a-1-wr", "plumbing", "Washroom tap leaking (again)", "Third time this tap is leaking. Floor stays wet.", "Assigned"],
+    [3, "a-1-wr", "plumbing", "Washroom tap leaking (again)", "Third time this tap is leaking. Floor stays wet.", "Escalated"],
 
     // Computer Lab 3: most complained-about room
     [27, "cl-3", "computer", "PC 12 not booting", "PC 12 shows a black screen after the BIOS logo.", "Resolved"],
@@ -108,25 +96,14 @@ async function main() {
     console.log("Connected to MongoDB");
 
     if (reset) {
-        await Promise.all([Complaint.deleteMany({}), Worker.deleteMany({}), Counter.deleteMany({})]);
-        console.log("Reset: complaints, workers and counter cleared");
+        await Promise.all([Complaint.deleteMany({}), Counter.deleteMany({})]);
+        console.log("Reset: complaints and counter cleared");
     }
 
     const reporter = email ? await User.findOne({ email: email.toLowerCase() }) : await User.findOne();
     if (!reporter) throw new Error("No user found. Register a normal user in the app first.");
 
-    let workers = await Worker.find();
-    if (!workers.length) {
-        workers = await Worker.insertMany(WORKERS);
-        console.log(`Created ${workers.length} workers`);
-    }
-    const workerFor = (flair) => {
-        const group = flairById[flair].group;
-        const skilled = workers.filter((w) => w.skills.includes(group) && w.status !== "Off Duty");
-        return pick(skilled.length ? skilled : workers);
-    };
-
-    const fillerStatuses = ["Resolved", "Resolved", "Resolved", "In Progress", "Assigned", "Reported"];
+    const fillerStatuses = ["Resolved", "Resolved", "Resolved", "In Progress", "Escalated", "Reported"];
     const rows = [
         ...SCRIPTED,
         ...FILLERS.map(([room, flair, title, desc]) => [
@@ -150,19 +127,16 @@ async function main() {
         );
 
         const updates = [{ status: "Reported", comment: "Complaint submitted.", by: "System", at: createdAt }];
-        let assignedWorker = null;
         let resolution = null;
         let t = createdAt.getTime();
 
         if (finalStatus !== "Reported") {
-            const w = workerFor(flair);
-            assignedWorker = w._id;
-            t += 2 * HOUR;
-            updates.push({ status: "Assigned", comment: `Assigned to ${w.name}.`, by: "Admin", at: new Date(t) });
+            t += 3 * HOUR;
+            updates.push({ status: "In Progress", comment: "Maintenance team is looking into it.", by: "Admin", at: new Date(t) });
         }
-        if (["In Progress", "Resolved"].includes(finalStatus)) {
-            t += 4 * HOUR;
-            updates.push({ status: "In Progress", comment: "Technician is on site.", by: "Admin", at: new Date(t) });
+        if (finalStatus === "Escalated") {
+            t += 20 * HOUR;
+            updates.push({ status: "Escalated", comment: "Needs a vendor visit — escalated to the administration office.", by: "Admin", at: new Date(t) });
         }
         if (finalStatus === "Resolved") {
             t += (6 + Math.floor(rand() * 40)) * HOUR;
@@ -185,8 +159,8 @@ async function main() {
             matchedKeywords: detected.matchedKeywords,
             status: finalStatus,
             reportedBy: reporter._id,
-            reporterType: rand() > 0.8 ? "Faculty" : "Student",
-            assignedWorker,
+            reporterType: rand() > 0.8 ? "Teacher" : "Student",
+            reporterDepartment: ["comp", "it", "ece", "cse"][Math.floor(rand() * 4)],
             isRecurring: prior.length > 0,
             recurrenceCount: prior.length,
             updates,

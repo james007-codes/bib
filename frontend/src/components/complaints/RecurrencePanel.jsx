@@ -17,7 +17,7 @@ export function RecurrencePanel({ recurrence, roomName }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ backgroundColor: COLORS.warningSoft, color: COLORS.warning }}>
+      <div className="flex items-start gap-3 rounded-md px-4 py-3" style={{ backgroundColor: COLORS.warningSoft, color: COLORS.warning }}>
         <Repeat className="w-4 h-4 mt-0.5 shrink-0" />
         <p className="text-sm font-medium">
           Recurring issue — {ordinal(nth)} report in {recurrence.windowDays || 30} days. Consider a permanent fix.
@@ -27,7 +27,7 @@ export function RecurrencePanel({ recurrence, roomName }) {
       {recurrence.history?.length > 0 && (
         <ol className="space-y-3">
           {recurrence.history.map((h) => (
-            <li key={h.id} className="flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2.5" style={{ borderColor: COLORS.line }}>
+            <li key={h.id} className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2.5" style={{ borderColor: COLORS.line }}>
               <span className="text-xs font-mono font-semibold" style={{ color: COLORS.slate }}>{h.ticketNo}</span>
               <span className="text-sm flex-1 min-w-[140px]" style={{ color: COLORS.ink }}>{h.title}</span>
               <StatusPill status={h.status} />

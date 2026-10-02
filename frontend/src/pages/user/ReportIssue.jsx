@@ -8,7 +8,7 @@ import { FlairChip, PriorityBadge, RoomTypeTag } from "../../components/shared/B
 import { LocationPicker, Field, resolveRoom } from "../../components/complaints/LocationPicker.jsx";
 import { FlairPicker } from "../../components/complaints/FlairPicker.jsx";
 import { PhotoDropzone } from "../../components/complaints/PhotoDropzone.jsx";
-import { getFlair } from "../../data/config.js";
+import { getFlair, departmentLabel } from "../../data/config.js";
 import { ordinal } from "../../utils/format.js";
 import { previewPriority, createComplaint } from "../../services/complaintService.js";
 
@@ -20,10 +20,9 @@ const EMPTY = {
   title: "",
   description: "",
   photos: [],
-  reporterType: "Student",
 };
 
-export function ReportIssue({ onOpenComplaint, onNavigate }) {
+export function ReportIssue({ user, onOpenComplaint, onNavigate }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(EMPTY);
   const [preview, setPreview] = useState(null);
@@ -85,7 +84,6 @@ export function ReportIssue({ onOpenComplaint, onNavigate }) {
       fd.append("floorId", form.location.floorId);
       fd.append("roomId", form.location.roomId);
       if (form.location.spot.trim()) fd.append("spot", form.location.spot.trim());
-      fd.append("reporterType", form.reporterType);
       form.photos.forEach((f) => fd.append("photos", f));
 
       setCreated(await createComplaint(fd));
@@ -99,17 +97,17 @@ export function ReportIssue({ onOpenComplaint, onNavigate }) {
   /* ---------- success ---------- */
   if (created) {
     return (
-      <div className="p-4 sm:p-6 max-w-xl mx-auto">
+      <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-xl mx-auto">
         <Card className="p-8 text-center">
           <div className="w-14 h-14 mx-auto rounded-full flex items-center justify-center" style={{ backgroundColor: COLORS.successSoft }}>
             <CheckCircle2 className="w-7 h-7" style={{ color: COLORS.success }} />
           </div>
-          <h1 className="text-xl font-bold mt-4" style={{ color: COLORS.ink }}>Complaint submitted</h1>
+          <h1 className="text-lg font-semibold tracking-tight mt-4" style={{ color: COLORS.ink }}>Complaint submitted</h1>
           <p className="text-sm mt-1" style={{ color: COLORS.slate }}>Maintenance has been notified.</p>
 
-          <div className="mt-6 rounded-2xl border p-4 inline-flex flex-col items-center gap-2" style={{ borderColor: COLORS.line }}>
-            <span className="text-xs uppercase tracking-wide" style={{ color: COLORS.slate }}>Ticket number</span>
-            <span className="text-2xl font-mono font-bold" style={{ color: COLORS.primary }}>{created.ticketNo}</span>
+          <div className="mt-6 rounded-lg border p-4 inline-flex flex-col items-center gap-2" style={{ borderColor: COLORS.line }}>
+            <span className="text-xs" style={{ color: COLORS.slate }}>Ticket number</span>
+            <span className="text-2xl font-mono font-semibold" style={{ color: COLORS.primary }}>{created.ticketNo}</span>
             <PriorityBadge priority={created.priority} raised={created.prioritySource === "keyword"} />
           </div>
 
@@ -127,8 +125,8 @@ export function ReportIssue({ onOpenComplaint, onNavigate }) {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
-      <h1 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: COLORS.ink }}>Report an issue</h1>
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-3xl mx-auto">
+      <h1 className="text-lg font-semibold tracking-tight" style={{ color: COLORS.ink }}>Report an issue</h1>
       <p className="text-sm mt-1 mb-6" style={{ color: COLORS.slate }}>Step {step + 1} of {STEPS.length} · {STEPS[step]}</p>
 
       {/* progress */}
@@ -138,7 +136,7 @@ export function ReportIssue({ onOpenComplaint, onNavigate }) {
         ))}
       </div>
 
-      <Card className="p-5 sm:p-6">
+      <Card className="p-5">
         {step === 0 && (
           <Section title="Where is the problem?">
             <LocationPicker value={form.location} onChange={(location) => set({ location })} />
@@ -210,20 +208,9 @@ export function ReportIssue({ onOpenComplaint, onNavigate }) {
               <Row label="Title">{form.title}</Row>
               <Row label="Description"><span className="whitespace-pre-wrap">{form.description}</span></Row>
               <Row label="Photos">{form.photos.length} attached</Row>
-              <Row label="I am a">
-                <div className="inline-flex rounded-lg p-1" style={{ backgroundColor: COLORS.graySoft }}>
-                  {["Student", "Faculty"].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => set({ reporterType: t })}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${form.reporterType === t ? "bg-white shadow-sm" : ""}`}
-                      style={{ color: form.reporterType === t ? COLORS.ink : COLORS.slate }}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+              <Row label="Reported by">
+                {user?.name} · {user?.userType || "Student"}
+                {departmentLabel(user?.department) && ` · ${departmentLabel(user.department)}`}
               </Row>
             </dl>
             {priority === "Critical" && <SafetyBanner className="mt-4" />}
@@ -260,7 +247,7 @@ export function ReportIssue({ onOpenComplaint, onNavigate }) {
 function Section({ title, subtitle, children }) {
   return (
     <div>
-      <h2 className="text-base font-semibold" style={{ color: COLORS.ink }}>{title}</h2>
+      <h2 className="text-[15px] font-semibold tracking-tight" style={{ color: COLORS.ink }}>{title}</h2>
       {subtitle && <p className="text-sm mt-0.5" style={{ color: COLORS.slate }}>{subtitle}</p>}
       <div className="mt-4">{children}</div>
     </div>
@@ -278,7 +265,7 @@ function Row({ label, children }) {
 
 function SafetyBanner({ className = "" }) {
   return (
-    <div role="alert" className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${className}`} style={{ backgroundColor: COLORS.criticalSoft, borderColor: "#FECACA", color: COLORS.critical }}>
+    <div role="alert" className={`flex items-start gap-3 rounded-md border px-4 py-3 ${className}`} style={{ backgroundColor: COLORS.criticalSoft, borderColor: "rgba(239,68,68,0.35)", color: COLORS.critical }}>
       <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
       <p className="text-sm font-semibold">This looks dangerous. Stay away from the area; maintenance has been alerted.</p>
     </div>
@@ -291,7 +278,7 @@ function PriorityPreview({ flair, priority, preview, loading, roomName }) {
 
   return (
     <div className="space-y-3" aria-live="polite">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl px-4 py-3" style={{ backgroundColor: COLORS.bg }}>
+      <div className="flex flex-wrap items-center gap-2 rounded-md px-4 py-3" style={{ backgroundColor: COLORS.bg }}>
         <span className="text-sm" style={{ color: COLORS.slate }}>Priority</span>
         <PriorityBadge priority={priority} raised={raised} />
         {loading && <Loader2 className="w-4 h-4 animate-spin" style={{ color: COLORS.slate }} />}
@@ -309,7 +296,7 @@ function PriorityPreview({ flair, priority, preview, loading, roomName }) {
       {priority === "Critical" && <SafetyBanner />}
 
       {rec?.isRecurring && (
-        <div className="flex items-start gap-3 rounded-xl px-4 py-3" style={{ backgroundColor: COLORS.warningSoft, color: COLORS.warning }}>
+        <div className="flex items-start gap-3 rounded-md px-4 py-3" style={{ backgroundColor: COLORS.warningSoft, color: COLORS.warning }}>
           <Repeat className="w-4 h-4 mt-0.5 shrink-0" />
           <p className="text-sm font-medium">
             This issue has been reported {rec.count} time{rec.count > 1 ? "s" : ""} in {roomName} in the last {rec.windowDays} days.

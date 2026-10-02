@@ -19,7 +19,7 @@ export function UpdateTimeline({ updates = [] }) {
             {i < items.length - 1 && (
               <span className="absolute left-[5px] top-4 bottom-[-20px] w-px" style={{ backgroundColor: COLORS.line }} />
             )}
-            <span className="absolute left-0 top-1.5 w-3 h-3 rounded-full border-2 bg-white" style={{ borderColor: c.fg }} />
+            <span className="absolute left-0 top-1.5 w-3 h-3 rounded-full border-2 bg-surface" style={{ borderColor: c.fg }} />
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span className="text-xs font-semibold" style={{ color: c.fg }}>{u.status}</span>
               <span className="text-xs" style={{ color: COLORS.slate }}>· {u.by} · {formatDateTime(u.at)}</span>

@@ -3,15 +3,41 @@ import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import Admin from "../models/Admin.js";
 import generateToken from "../utils/generateToken.js";
+import config from "../config/complaintConfig.js";
+
+const departmentIds = config.departments.map((d) => d.id);
+
+// Public shape of a user account (register, login)
+const publicUser = (user) => ({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    userType: user.userType,
+    department: user.department,
+});
 
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, userType = "Student", department = null } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required",
+            });
+        }
+
+        if (!config.userTypes.includes(userType)) {
+            return res.status(400).json({
+                success: false,
+                message: `userType must be one of: ${config.userTypes.join(", ")}`,
+            });
+        }
+
+        if (department !== null && !departmentIds.includes(department)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid department",
             });
         }
 
@@ -30,6 +56,8 @@ export const registerUser = async (req, res) => {
             name,
             email,
             password: hashedPassword,
+            userType,
+            department,
         });
 
         const token = generateToken(user._id, "user");
@@ -38,11 +66,7 @@ export const registerUser = async (req, res) => {
             success: true,
             message: "User registered successfully",
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-            },
+            user: publicUser(user),
         });
 
     } catch (error) {
@@ -87,11 +111,7 @@ export const loginUser = async (req, res) => {
             success: true,
             message: "Login successful",
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-            },
+            user: publicUser(user),
         });
 
     } catch (error) {

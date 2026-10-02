@@ -54,13 +54,9 @@ const complaintSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
-        reporterType: { type: String, enum: ["Student", "Faculty"], default: "Student" },
-
-        assignedWorker: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Worker",
-            default: null,
-        },
+        // "Faculty" is legacy data from before the Student/Teacher split
+        reporterType: { type: String, enum: ["Student", "Teacher", "Faculty"], default: "Student" },
+        reporterDepartment: { type: String, default: null },
 
         // Snapshot taken at creation (used for list filters and badges).
         // Full history is computed live on the detail endpoints.
@@ -88,7 +84,6 @@ const complaintSchema = new mongoose.Schema(
 complaintSchema.index({ "location.roomId": 1, flair: 1, createdAt: -1 });
 complaintSchema.index({ status: 1, priority: 1 });
 complaintSchema.index({ reportedBy: 1, createdAt: -1 });
-complaintSchema.index({ assignedWorker: 1, status: 1 });
 
 const Complaint = mongoose.model("Complaint", complaintSchema);
 

@@ -2,12 +2,11 @@ import React from "react";
 import {
   Zap, Flame, PlugZap, Lightbulb, Fan, AirVent, Projector, Presentation, Armchair, Monitor, Wifi,
   FlaskConical, GlassWater, Droplets, Bath, Bug, UtensilsCrossed, CookingPot, ArrowUpDown,
-  Construction, Sparkles, CircleHelp, ShieldAlert, AlertTriangle, Info, Minus, TrendingUp, Repeat,
+  Construction, Sparkles, CircleHelp, TrendingUp, Repeat, Printer, AppWindow, DoorOpen, Library, CircleParking,
 } from "lucide-react";
 
 import { COLORS, PRIORITY_COLORS, STATUS_COLORS } from "../../styles/tokens.js";
 import { getFlair } from "../../data/config.js";
-import { PulseDot } from "./PulseDot.jsx";
 
 /* =========================
    FLAIR ICONS (names come from complaintConfig.json)
@@ -16,7 +15,7 @@ import { PulseDot } from "./PulseDot.jsx";
 const ICONS = {
   Zap, Flame, PlugZap, Lightbulb, Fan, AirVent, Projector, Presentation, Armchair, Monitor, Wifi,
   FlaskConical, GlassWater, Droplets, Bath, Bug, UtensilsCrossed, CookingPot, ArrowUpDown,
-  Construction, Sparkles, CircleHelp,
+  Construction, Sparkles, CircleHelp, Printer, AppWindow, DoorOpen, Library, CircleParking,
 };
 
 export function FlairIcon({ name, className = "w-4 h-4", style }) {
@@ -24,66 +23,75 @@ export function FlairIcon({ name, className = "w-4 h-4", style }) {
   return <Icon className={className} style={style} aria-hidden="true" />;
 }
 
-/* Reddit-style colored pill */
+/* Neutral chip — color lives only on the icon */
 export function FlairChip({ flair: flairId, size = "sm", selected, onClick }) {
   const f = getFlair(flairId);
   const Tag = onClick ? "button" : "span";
-  const pad = size === "lg" ? "px-3 py-2 text-sm" : "px-2.5 py-1 text-xs";
+  const pad = size === "lg" ? "h-8 px-3 text-[13px]" : "h-6 px-2 text-xs";
 
   return (
     <Tag
       type={onClick ? "button" : undefined}
       onClick={onClick}
       aria-pressed={onClick ? !!selected : undefined}
-      className={`inline-flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap transition ${pad} ${
-        onClick ? "hover:shadow-sm hover:-translate-y-px" : ""
+      className={`inline-flex items-center gap-1.5 rounded-md border font-medium whitespace-nowrap transition-colors ${pad} ${
+        onClick ? "hover:border-zinc-600 hover:bg-hover" : ""
       }`}
       style={{
-        backgroundColor: selected ? f.color : `${f.color}14`,
-        color: selected ? "white" : f.color,
-        border: `1px solid ${selected ? f.color : `${f.color}33`}`,
+        backgroundColor: selected ? COLORS.primary : COLORS.surface2,
+        color: selected ? "white" : COLORS.ink,
+        borderColor: selected ? COLORS.primary : COLORS.line,
       }}
     >
-      <FlairIcon name={f.icon} className={size === "lg" ? "w-4 h-4" : "w-3.5 h-3.5"} />
+      <FlairIcon name={f.icon} className={size === "lg" ? "w-3.5 h-3.5" : "w-3 h-3"} style={{ color: selected ? "white" : f.color }} />
       {f.label}
     </Tag>
   );
 }
 
 /* =========================
-   PRIORITY
+   PRIORITY — dot + label
 ========================= */
 
-const PRIORITY_ICON = { Critical: ShieldAlert, High: AlertTriangle, Medium: Info, Low: Minus };
-
-export function PriorityBadge({ priority, raised = false, showIcon = true }) {
+export function PriorityBadge({ priority, raised = false }) {
   const s = PRIORITY_COLORS[priority] || PRIORITY_COLORS.Low;
-  const Icon = PRIORITY_ICON[priority] || Minus;
+  const critical = priority === "Critical";
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
-      style={{ backgroundColor: s.bg, color: s.fg }}
+      className="inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap"
+      style={{ color: critical ? COLORS.critical : COLORS.ink }}
       title={raised ? "Raised by keyword" : undefined}
     >
-      {priority === "Critical" ? <PulseDot color={s.fg} /> : showIcon && <Icon className="w-3.5 h-3.5" aria-hidden="true" />}
+      <span className="relative inline-flex w-2 h-2">
+        {critical && <span className="animate-ping absolute inset-0 rounded-full opacity-50" style={{ backgroundColor: s.fg }} />}
+        <span className="relative w-2 h-2 rounded-full" style={{ backgroundColor: s.fg }} />
+      </span>
       {priority}
-      {raised && <TrendingUp className="w-3.5 h-3.5" aria-label="raised by keyword" />}
+      {raised && <TrendingUp className="w-3 h-3" style={{ color: COLORS.critical }} aria-label="raised by keyword" />}
     </span>
   );
 }
 
 /* =========================
-   STATUS
+   STATUS — outlined with a status ring
 ========================= */
 
 export function StatusPill({ status }) {
   const s = STATUS_COLORS[status] || STATUS_COLORS.Reported;
+  const done = status === "Resolved";
   return (
     <span
-      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
-      style={{ backgroundColor: s.bg, color: s.fg }}
+      className="inline-flex items-center gap-1.5 h-6 px-2 rounded-md border text-xs font-medium whitespace-nowrap"
+      style={{ borderColor: COLORS.line, color: COLORS.ink }}
     >
+      <span
+        className="w-2.5 h-2.5 rounded-full"
+        style={{
+          border: `1.5px solid ${s.fg}`,
+          background: done || status === "Escalated" ? s.fg : status === "In Progress" ? `conic-gradient(${s.fg} 0 50%, transparent 50% 100%)` : "transparent",
+        }}
+      />
       {status}
     </span>
   );
@@ -96,10 +104,7 @@ export function StatusPill({ status }) {
 export function RoomTypeTag({ roomType }) {
   if (!roomType) return null;
   return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium whitespace-nowrap"
-      style={{ backgroundColor: COLORS.graySoft, color: COLORS.slate }}
-    >
+    <span className="text-xs whitespace-nowrap" style={{ color: COLORS.slate }}>
       {roomType}
     </span>
   );
@@ -107,27 +112,10 @@ export function RoomTypeTag({ roomType }) {
 
 export function RecurringTag({ count }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold whitespace-nowrap"
-      style={{ backgroundColor: COLORS.warningSoft, color: COLORS.warning }}
-      title="Recurring issue"
-    >
+    <span className="inline-flex items-center gap-1 text-xs font-medium whitespace-nowrap" style={{ color: COLORS.warning }} title="Recurring issue">
       <Repeat className="w-3 h-3" aria-hidden="true" />
-      {count ? `Recurring ×${count + 1}` : "Recurring"}
+      {count ? `${count + 1}× this month` : "Recurring"}
     </span>
   );
 }
 
-export function WorkerStatusPill({ status }) {
-  const map = {
-    Available: { bg: COLORS.successSoft, fg: COLORS.success },
-    Busy: { bg: COLORS.warningSoft, fg: COLORS.warning },
-    "Off Duty": { bg: COLORS.graySoft, fg: COLORS.gray },
-  };
-  const s = map[status] || map.Available;
-  return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold" style={{ backgroundColor: s.bg, color: s.fg }}>
-      {status}
-    </span>
-  );
-}

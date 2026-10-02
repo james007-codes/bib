@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import config from "../config/complaintConfig.js";
 
 const userSchema = new mongoose.Schema(
     {
@@ -19,6 +20,19 @@ const userSchema = new mongoose.Schema(
         password: {
             type: String,
             required: true,
+        },
+
+        // Chosen once at sign-up; every complaint inherits them
+        userType: {
+            type: String,
+            enum: config.userTypes,
+            default: "Student",
+        },
+
+        department: {
+            type: String,
+            enum: [...config.departments.map((d) => d.id), null],
+            default: null,
         },
     },
     {

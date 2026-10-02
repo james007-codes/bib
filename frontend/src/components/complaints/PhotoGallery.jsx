@@ -28,7 +28,7 @@ export function PhotoGallery({ photos = [], size = "md" }) {
           <button
             key={p.url}
             onClick={() => setOpen(i)}
-            className={`${dim} rounded-xl overflow-hidden border hover:opacity-90 transition focus:outline-none focus-visible:ring-2`}
+            className={`${dim} rounded-md overflow-hidden border hover:opacity-90 transition focus:outline-none focus-visible:ring-2`}
             style={{ borderColor: COLORS.line, "--tw-ring-color": COLORS.primary }}
             aria-label={`Open photo ${i + 1}`}
           >
@@ -63,7 +63,7 @@ export function PhotoGallery({ photos = [], size = "md" }) {
           <img
             src={photos[open].url}
             alt={photos[open].name || "Photo"}
-            className="max-h-[85vh] max-w-full rounded-xl shadow-2xl"
+            className="max-h-[85vh] max-w-full rounded-md shadow-[0_16px_50px_rgba(0,0,0,0.3)]"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

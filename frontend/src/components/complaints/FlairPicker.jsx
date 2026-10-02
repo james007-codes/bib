@@ -10,7 +10,7 @@ export function FlairPicker({ value, onChange }) {
     <div className="space-y-5">
       {flairsByGroup.map((g) => (
         <div key={g.id}>
-          <h4 className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: COLORS.slate }}>{g.label}</h4>
+          <h4 className="text-xs font-medium mb-2" style={{ color: COLORS.slate }}>{g.label}</h4>
           <div className="flex flex-wrap gap-2">
             {g.flairs.map((f) => (
               <FlairChip key={f.id} flair={f.id} size="lg" selected={value === f.id} onClick={() => onChange(f.id)} />
@@ -20,7 +20,7 @@ export function FlairPicker({ value, onChange }) {
       ))}
 
       {selected && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl px-4 py-3 text-sm" style={{ backgroundColor: COLORS.bg }}>
+        <div className="flex flex-wrap items-center gap-2 rounded-md px-4 py-3 text-sm" style={{ backgroundColor: COLORS.bg }}>
           <span style={{ color: COLORS.slate }}>Default priority for</span>
           <span className="font-semibold" style={{ color: COLORS.ink }}>{selected.label}:</span>
           <PriorityBadge priority={selected.defaultPriority} />

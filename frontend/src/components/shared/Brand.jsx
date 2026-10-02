@@ -1,24 +1,26 @@
 import React from "react";
-import { Wrench } from "lucide-react";
 import { COLORS } from "../../styles/tokens.js";
 
-export const APP_NAME = "FixFlow";
-export const APP_TAGLINE = "Smart campus maintenance & predictive complaint management";
+export const APP_NAME = "XIE CampusCare";
+export const APP_TAGLINE = "Xavier Institute of Engineering · Mahim, Mumbai";
 
-/* Brand mark: a small "pulse" line kept from the boilerplate, now in indigo */
-export function Vitals({ w = 64, h = 20, color = COLORS.primary, animated = true }) {
+// Kept for the auth pages; now a quiet static rule instead of an animated line.
+export function Vitals({ w = 64 }) {
+  return <div aria-hidden="true" style={{ width: w, height: 1, backgroundColor: COLORS.line }} />;
+}
+
+export function Mark({ size = 22 }) {
   return (
-    <svg width={w} height={h} viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <polyline
-        points="0,16 22,16 30,4 38,28 46,10 54,16 120,16"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-        style={animated ? { strokeDasharray: 200, strokeDashoffset: 200, animation: "vitals-draw 2.4s ease-in-out infinite" } : {}}
-      />
-      <style>{`@keyframes vitals-draw { 0% { stroke-dashoffset: 200; } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; } }`}</style>
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <defs>
+        <linearGradient id="ff-mark" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#A99BFF" />
+          <stop offset="100%" stopColor="#5B4BD8" />
+        </linearGradient>
+      </defs>
+      <rect width="24" height="24" rx="6" fill="url(#ff-mark)" />
+      <path d="M7 16.5 12 7.5l5 9" stroke="white" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="14" r="1.4" fill="white" />
     </svg>
   );
 }
@@ -26,16 +28,11 @@ export function Vitals({ w = 64, h = 20, color = COLORS.primary, animated = true
 export function Logo({ size = "md" }) {
   const big = size === "lg";
   return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className="flex items-center justify-center rounded-xl shrink-0"
-        style={{ width: big ? 44 : 34, height: big ? 44 : 34, background: `linear-gradient(135deg, ${COLORS.primary}, #6366F1)` }}
-      >
-        <Wrench className="text-white" style={{ width: big ? 22 : 17, height: big ? 22 : 17 }} strokeWidth={2.4} />
-      </div>
+    <div className="flex items-center gap-2">
+      <Mark size={big ? 30 : 22} />
       <div>
-        <div className={`font-bold tracking-tight ${big ? "text-2xl" : "text-lg"}`} style={{ color: COLORS.ink }}>{APP_NAME}</div>
-        {big && <div className="text-sm" style={{ color: COLORS.slate }}>{APP_TAGLINE}</div>}
+        <div className={`font-semibold tracking-tight ${big ? "text-xl" : "text-[15px]"}`} style={{ color: COLORS.ink }}>{APP_NAME}</div>
+        {big && <div className="text-[13px]" style={{ color: COLORS.slate }}>{APP_TAGLINE}</div>}
       </div>
     </div>
   );

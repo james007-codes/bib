@@ -129,7 +129,8 @@ export const getCurrentUser = async () => {
    REGISTER USER
 ========================= */
 
-export const registerUser = async (name, email, password) => {
+// extra: { userType: "Student" | "Teacher", department: departmentId }
+export const registerUser = async (name, email, password, extra = {}) => {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
@@ -139,6 +140,7 @@ export const registerUser = async (name, email, password) => {
             name,
             email,
             password,
+            ...extra,
         }),
     });
 

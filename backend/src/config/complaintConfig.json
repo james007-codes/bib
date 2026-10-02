@@ -1,8 +1,23 @@
 {
   "priorities": ["Low", "Medium", "High", "Critical"],
-  "statuses": ["Reported", "Assigned", "In Progress", "Resolved"],
+  "statuses": ["Reported", "In Progress", "Escalated", "Resolved"],
+  "institution": {
+    "name": "Xavier Institute of Engineering",
+    "shortName": "XIE",
+    "location": "Mahim West, Mumbai"
+  },
+
+  "userTypes": ["Student", "Teacher"],
+
+  "departments": [
+    { "id": "comp", "label": "Computer Engineering" },
+    { "id": "it", "label": "Information Technology" },
+    { "id": "ece", "label": "Electronics and Computer Engineering" },
+    { "id": "cse", "label": "Computer Science and Engineering" },
+    { "id": "other", "label": "Other / Administration" }
+  ],
+
   "recurrenceWindowDays": 30,
-  "overloadThreshold": 5,
 
   "flairGroups": [
     { "id": "electrical-safety", "label": "Electrical & Safety" },
@@ -28,6 +43,8 @@
     { "id": "computer", "label": "Computer / Lab PC Issue", "group": "labs-it", "icon": "Monitor", "color": "#2563EB", "defaultPriority": "Medium" },
     { "id": "network", "label": "Wi-Fi & Network", "group": "labs-it", "icon": "Wifi", "color": "#0D9488", "defaultPriority": "Medium" },
     { "id": "lab-equipment", "label": "Lab Equipment Fault", "group": "labs-it", "icon": "FlaskConical", "color": "#9333EA", "defaultPriority": "Medium" },
+    { "id": "printer", "label": "Printer Issue", "group": "labs-it", "icon": "Printer", "color": "#475569", "defaultPriority": "Low" },
+    { "id": "software", "label": "Software / System Issue", "group": "labs-it", "icon": "AppWindow", "color": "#6366F1", "defaultPriority": "Medium" },
 
     { "id": "water-filter", "label": "Water Filter / Drinking Water", "group": "water-washroom", "icon": "GlassWater", "color": "#0EA5E9", "defaultPriority": "High" },
     { "id": "plumbing", "label": "Plumbing / Tap Leak", "group": "water-washroom", "icon": "Droplets", "color": "#3B82F6", "defaultPriority": "Medium" },
@@ -39,6 +56,9 @@
 
     { "id": "lift", "label": "Lift Not Working", "group": "campus", "icon": "ArrowUpDown", "color": "#DB2777", "defaultPriority": "High" },
     { "id": "structural", "label": "Structural Damage", "group": "campus", "icon": "Construction", "color": "#B91C1C", "defaultPriority": "High" },
+    { "id": "doors-windows", "label": "Door / Window Damage", "group": "campus", "icon": "DoorOpen", "color": "#92400E", "defaultPriority": "Low" },
+    { "id": "library", "label": "Library Issue", "group": "campus", "icon": "Library", "color": "#0F766E", "defaultPriority": "Low" },
+    { "id": "parking", "label": "Parking Issue", "group": "campus", "icon": "CircleParking", "color": "#4B5563", "defaultPriority": "Low" },
     { "id": "cleanliness", "label": "Cleanliness / Housekeeping", "group": "campus", "icon": "Sparkles", "color": "#65A30D", "defaultPriority": "Low" },
     { "id": "other", "label": "Other", "group": "campus", "icon": "CircleHelp", "color": "#64748B", "defaultPriority": "Low" }
   ],

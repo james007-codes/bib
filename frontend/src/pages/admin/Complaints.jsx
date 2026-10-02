@@ -3,7 +3,7 @@ import { Search, Inbox, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { COLORS } from "../../styles/tokens.js";
 import { Card } from "../../components/shared/Card.jsx";
-import { PulseDot } from "../../components/shared/PulseDot.jsx";
+import { LiveIndicator } from "../../components/shared/PulseDot.jsx";
 import { EmptyState, ErrorBanner, PageHeader, Skeleton, inputClass, inputStyle } from "../../components/shared/Feedback.jsx";
 import { ComplaintTable } from "../../components/complaints/ComplaintTable.jsx";
 import { STATUSES, PRIORITIES, FLAIRS, BUILDINGS, ROOM_TYPES } from "../../data/config.js";
@@ -50,24 +50,36 @@ export function Complaints({ onSelect, initialFilters = {} }) {
   const active = Object.entries(filters).some(([k, v]) => k !== "sort" && v);
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
       <PageHeader
-        title="Complaints"
-        subtitle={
-          <span className="inline-flex items-center gap-2">
-            <PulseDot color={COLORS.success} /> Live · refreshes every 20s
-            {data && <span>· {data.total} total</span>}
-          </span>
-        }
+        title="Queue"
+        subtitle={data ? `${data.total} complaint${data.total === 1 ? "" : "s"}` : "Loading…"}
+        action={<LiveIndicator />}
       />
 
-      <Card className="p-4 mb-4">
-        <div className="flex flex-wrap gap-2">
+      {/* status tabs */}
+      <div className="flex gap-1 mb-3 overflow-x-auto" role="tablist">
+        {["", ...STATUSES].map((s) => (
+          <button
+            key={s || "all"}
+            role="tab"
+            aria-selected={filters.status === s}
+            onClick={() => set({ status: s })}
+            className={`h-7 px-2.5 rounded-md text-[13px] font-medium whitespace-nowrap transition-colors ${filters.status === s ? "bg-surface border" : "border border-transparent hover:bg-hover"}`}
+            style={{ color: filters.status === s ? COLORS.ink : COLORS.slate, borderColor: filters.status === s ? COLORS.line : "transparent" }}
+          >
+            {s || "All"}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-3">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: COLORS.slate }} />
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: COLORS.slate }} />
             <input
               type="search"
-              className={`${inputClass} pl-9`}
+              className={`${inputClass} !h-8 pl-8`}
               style={inputStyle}
               placeholder="Search ticket, title, room…"
               value={search}
@@ -75,7 +87,6 @@ export function Complaints({ onSelect, initialFilters = {} }) {
               aria-label="Search complaints"
             />
           </div>
-          <Select value={filters.status} onChange={(v) => set({ status: v })} label="All statuses" options={STATUSES} />
           <Select value={filters.priority} onChange={(v) => set({ priority: v })} label="All priorities" options={PRIORITIES} />
           <Select value={filters.flair} onChange={(v) => set({ flair: v })} label="All issue types" options={FLAIRS.map((f) => [f.id, f.label])} />
           <Select value={filters.buildingId} onChange={(v) => set({ buildingId: v })} label="All buildings" options={BUILDINGS.map((b) => [b.id, b.name])} />
@@ -85,21 +96,25 @@ export function Complaints({ onSelect, initialFilters = {} }) {
             onChange={(v) => set({ sort: v })}
             options={[["priority", "Sort: Critical first"], ["newest", "Sort: Newest"], ["oldest", "Sort: Oldest"]]}
           />
-          <label className="inline-flex items-center gap-2 px-3 text-sm cursor-pointer" style={{ color: COLORS.ink }}>
-            <input type="checkbox" checked={filters.recurring} onChange={(e) => set({ recurring: e.target.checked })} className="accent-indigo-600" />
-            Recurring only
-          </label>
+          <button
+            onClick={() => set({ recurring: !filters.recurring })}
+            aria-pressed={filters.recurring}
+            className="h-8 px-2.5 rounded-md border text-[13px] font-medium transition-colors"
+            style={{ borderColor: filters.recurring ? COLORS.primary : COLORS.line, backgroundColor: filters.recurring ? COLORS.primary : "transparent", color: filters.recurring ? "white" : COLORS.slate }}
+          >
+            Recurring
+          </button>
           {active && (
             <button
-              className="text-sm font-medium px-2 hover:underline"
-              style={{ color: COLORS.primary }}
+              className="text-[13px] px-1.5 hover:underline"
+              style={{ color: COLORS.slate }}
               onClick={() => setFilters({ status: "", priority: "", flair: "", buildingId: "", roomType: "", recurring: false, sort: filters.sort })}
             >
-              Clear filters
+              Clear
             </button>
           )}
         </div>
-      </Card>
+      </div>
 
       <ErrorBanner message={error} />
 
@@ -134,7 +149,7 @@ export function Complaints({ onSelect, initialFilters = {} }) {
 
 function Select({ value, onChange, label, options }) {
   return (
-    <select className={`${inputClass} !w-auto`} style={inputStyle} value={value} onChange={(e) => onChange(e.target.value)} aria-label={label || "Sort"}>
+    <select className={`${inputClass} !w-auto !h-8 pr-7`} style={inputStyle} value={value} onChange={(e) => onChange(e.target.value)} aria-label={label || "Sort"}>
       {label && <option value="">{label}</option>}
       {options.map((o) => {
         const [v, l] = Array.isArray(o) ? o : [o, o];
