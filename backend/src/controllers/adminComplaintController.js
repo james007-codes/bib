@@ -6,6 +6,7 @@ import { findRecurrence } from "../utils/recurrence.js";
 import { serializeComplaint } from "../utils/serializeComplaint.js";
 import { buildStats } from "../utils/complaintStats.js";
 import { learnFromComplaint, getModelStats, retrainFromDatabase } from "../services/priorityModel.js";
+import { saveComplaintToOrdersFile } from "../utils/ordersFile.js";
 import { fileUrl, cleanupFiles } from "../middleware/uploadMiddleware.js";
 
 const POPULATE = [
@@ -149,6 +150,7 @@ export async function addStatusUpdate(req, res) {
         });
 
         await complaint.save();
+        saveComplaintToOrdersFile(complaint);
         return respondWithDetail(res, complaint);
     } catch (error) {
         console.error("Status update error:", error);
@@ -182,6 +184,7 @@ export async function overridePriority(req, res) {
         });
 
         await complaint.save();
+        saveComplaintToOrdersFile(complaint);
         // The admin's decision is the strongest signal the priority model gets
         learnFromComplaint(complaint);
         return respondWithDetail(res, complaint);
@@ -225,6 +228,7 @@ export async function resolveComplaint(req, res) {
         complaint.updates.push({ status: "Resolved", comment: note, by: req.account.name, at: resolvedAt });
 
         await complaint.save();
+        saveComplaintToOrdersFile(complaint);
         return respondWithDetail(res, complaint);
     } catch (error) {
         cleanupFiles(files);
