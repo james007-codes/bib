@@ -1,9 +1,12 @@
 import React from "react";
-import { Activity } from "lucide-react";
+import { Wrench } from "lucide-react";
 import { COLORS } from "../../styles/tokens.js";
 
-/* Brand mark: a small heartbeat / vitals line, the app's signature motif */
-export function Vitals({ w = 64, h = 20, color = COLORS.teal, animated = true }) {
+export const APP_NAME = "FixFlow";
+export const APP_TAGLINE = "Smart campus maintenance & predictive complaint management";
+
+/* Brand mark: a small "pulse" line kept from the boilerplate, now in indigo */
+export function Vitals({ w = 64, h = 20, color = COLORS.primary, animated = true }) {
   return (
     <svg width={w} height={h} viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <polyline
@@ -26,13 +29,13 @@ export function Logo({ size = "md" }) {
     <div className="flex items-center gap-2.5">
       <div
         className="flex items-center justify-center rounded-xl shrink-0"
-        style={{ width: big ? 44 : 34, height: big ? 44 : 34, backgroundColor: COLORS.teal }}
+        style={{ width: big ? 44 : 34, height: big ? 44 : 34, background: `linear-gradient(135deg, ${COLORS.primary}, #6366F1)` }}
       >
-        <Activity className="text-white" style={{ width: big ? 24 : 18, height: big ? 24 : 18 }} strokeWidth={2.4} />
+        <Wrench className="text-white" style={{ width: big ? 22 : 17, height: big ? 22 : 17 }} strokeWidth={2.4} />
       </div>
       <div>
-        <div className={`font-bold tracking-tight ${big ? "text-2xl" : "text-lg"}`} style={{ color: COLORS.ink }}>CareFlow</div>
-        {big && <div className="text-sm" style={{ color: COLORS.slate }}>Smart Hospital Queue &amp; Resource Management</div>}
+        <div className={`font-bold tracking-tight ${big ? "text-2xl" : "text-lg"}`} style={{ color: COLORS.ink }}>{APP_NAME}</div>
+        {big && <div className="text-sm" style={{ color: COLORS.slate }}>{APP_TAGLINE}</div>}
       </div>
     </div>
   );

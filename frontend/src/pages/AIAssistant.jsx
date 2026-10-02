@@ -14,9 +14,14 @@ import {
   getConversations,
   getConversationMessages,
   createConversation,
-} from "../services/conversationService.js";
+  sendAIMessage,
+} from "../services/aiService.js";
 
-import { sendAIMessage } from "../services/aiService.js";
+const SUGGESTIONS = [
+  "What's the status of my latest complaint?",
+  "How do I report an issue?",
+  "What happens after I report?",
+];
 
 export function AIAssistant() {
   const [conversations, setConversations] = useState([]);
@@ -110,10 +115,10 @@ export function AIAssistant() {
   // SEND MESSAGE
   // =========================
 
-  const handleSend = async (e) => {
+  const handleSend = async (e, preset) => {
     e?.preventDefault();
 
-    const trimmed = message.trim();
+    const trimmed = (preset ?? message).trim();
 
     if (
       !trimmed ||
@@ -228,13 +233,13 @@ export function AIAssistant() {
               className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{
                 backgroundColor:
-                  COLORS.tealSoft,
+                  COLORS.primarySoft,
               }}
             >
               <Bot
                 className="w-5 h-5"
                 style={{
-                  color: COLORS.teal,
+                  color: COLORS.primary,
                 }}
               />
             </div>
@@ -246,7 +251,7 @@ export function AIAssistant() {
                   color: COLORS.ink,
                 }}
               >
-                CareFlow AI
+                FixFlow Assistant
               </h2>
 
               <p
@@ -267,7 +272,7 @@ export function AIAssistant() {
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             style={{
               backgroundColor:
-                COLORS.teal,
+                COLORS.primary,
             }}
           >
             <Plus className="w-4 h-4" />
@@ -341,12 +346,12 @@ export function AIAssistant() {
                       style={{
                         backgroundColor:
                           active
-                            ? COLORS.tealSoft
+                            ? COLORS.primarySoft
                             : "transparent",
 
                         color:
                           active
-                            ? COLORS.teal
+                            ? COLORS.primary
                             : COLORS.ink,
                       }}
                     >
@@ -402,14 +407,14 @@ export function AIAssistant() {
                     className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center"
                     style={{
                       backgroundColor:
-                        COLORS.tealSoft,
+                        COLORS.primarySoft,
                     }}
                   >
                     <Bot
                       className="w-7 h-7"
                       style={{
                         color:
-                          COLORS.teal,
+                          COLORS.primary,
                       }}
                     />
                   </div>
@@ -421,7 +426,7 @@ export function AIAssistant() {
                         COLORS.ink,
                     }}
                   >
-                    CareFlow AI
+                    FixFlow Assistant
                   </h3>
 
                   <p
@@ -442,7 +447,7 @@ export function AIAssistant() {
                     className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white"
                     style={{
                       backgroundColor:
-                        COLORS.teal,
+                        COLORS.primary,
                     }}
                   >
                     <Plus className="w-4 h-4" />
@@ -468,7 +473,7 @@ export function AIAssistant() {
                         className="w-5 h-5 animate-spin"
                         style={{
                           color:
-                            COLORS.teal,
+                            COLORS.primary,
                         }}
                       />
                     </div>
@@ -484,7 +489,7 @@ export function AIAssistant() {
                             className="w-9 h-9 mx-auto mb-3"
                             style={{
                               color:
-                                COLORS.teal,
+                                COLORS.primary,
                             }}
                           />
 
@@ -505,12 +510,25 @@ export function AIAssistant() {
                                 COLORS.slate,
                             }}
                           >
-                            Ask me about
-                            patients,
-                            hospital flow,
-                            policies, or
-                            anything else.
+                            Ask how reporting works, what happens next, or anything about campus maintenance.
                           </p>
+
+                          <div className="flex flex-wrap justify-center gap-2 mt-4">
+                            {SUGGESTIONS.map((s) => (
+                              <button
+                                key={s}
+                                onClick={() => handleSend(null, s)}
+                                disabled={loading}
+                                className="px-3 py-1.5 rounded-full text-xs font-medium border transition hover:bg-indigo-50 disabled:opacity-50"
+                                style={{
+                                  borderColor: COLORS.line,
+                                  color: COLORS.primary,
+                                }}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
 
                         </div>
 
@@ -540,7 +558,7 @@ export function AIAssistant() {
                             style={{
                               backgroundColor:
                                 isUser
-                                  ? COLORS.teal
+                                  ? COLORS.primary
                                   : COLORS.bg,
 
                               color:
@@ -655,7 +673,7 @@ export function AIAssistant() {
                             className="w-4 h-4 animate-spin"
                             style={{
                               color:
-                                COLORS.teal,
+                                COLORS.primary,
                             }}
                           />
                         </div>
@@ -694,14 +712,14 @@ export function AIAssistant() {
                         )
                       }
                       disabled={loading}
-                      placeholder="Ask CareFlow AI..."
+                      placeholder="Ask FixFlow Assistant..."
                       className="flex-1 rounded-xl border px-4 py-3 text-sm outline-none focus:ring-2"
                       style={{
                         borderColor:
                           COLORS.line,
 
                         "--tw-ring-color":
-                          COLORS.teal,
+                          COLORS.primary,
                       }}
                     />
 
@@ -714,7 +732,7 @@ export function AIAssistant() {
                       className="w-11 h-11 shrink-0 rounded-xl flex items-center justify-center text-white disabled:opacity-50"
                       style={{
                         backgroundColor:
-                          COLORS.teal,
+                          COLORS.primary,
                       }}
                     >
 

@@ -125,7 +125,7 @@ try {
                             style={{
                                 backgroundColor:
                                     role === "user"
-                                        ? COLORS.teal
+                                        ? COLORS.primary
                                         : "transparent",
                                 color:
                                     role === "user"
@@ -133,7 +133,7 @@ try {
                                         : COLORS.slate,
                             }}
                         >
-                            Patient
+                            Student / Faculty
                         </button>
 
                         <button
@@ -143,7 +143,7 @@ try {
                             style={{
                                 backgroundColor:
                                     role === "admin"
-                                        ? COLORS.teal
+                                        ? COLORS.primary
                                         : "transparent",
                                 color:
                                     role === "admin"
@@ -151,7 +151,7 @@ try {
                                         : COLORS.slate,
                             }}
                         >
-                            Staff / Admin
+                            Maintenance Admin
                         </button>
                     </div>
 
@@ -161,8 +161,8 @@ try {
                         style={{ color: COLORS.ink }}
                     >
                         {role === "admin"
-                            ? "Create staff account"
-                            : "Create patient account"}
+                            ? "Create admin account"
+                            : "Create your account"}
                     </h1>
 
                     <p
@@ -170,8 +170,8 @@ try {
                         style={{ color: COLORS.slate }}
                     >
                         {role === "admin"
-                            ? "Register a CareFlow staff or administrator account."
-                            : "Create your CareFlow patient account."}
+                            ? "Register a FixFlow maintenance admin account."
+                            : "Students and faculty: report campus issues in under a minute."}
                     </p>
 
                     {/* Error */}
@@ -213,7 +213,7 @@ try {
                                     borderColor: errors.name
                                         ? COLORS.critical
                                         : COLORS.line,
-                                    "--tw-ring-color": COLORS.teal,
+                                    "--tw-ring-color": COLORS.primary,
                                 }}
                             />
 
@@ -242,14 +242,14 @@ try {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@hospital.org"
+                                placeholder="you@college.edu"
                                 aria-invalid={!!errors.email}
                                 className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
                                 style={{
                                     borderColor: errors.email
                                         ? COLORS.critical
                                         : COLORS.line,
-                                    "--tw-ring-color": COLORS.teal,
+                                    "--tw-ring-color": COLORS.primary,
                                 }}
                             />
 
@@ -288,7 +288,7 @@ try {
                                         borderColor: errors.password
                                             ? COLORS.critical
                                             : COLORS.line,
-                                        "--tw-ring-color": COLORS.teal,
+                                        "--tw-ring-color": COLORS.primary,
                                     }}
                                 />
 
@@ -354,7 +354,7 @@ try {
                                             errors.confirmPassword
                                                 ? COLORS.critical
                                                 : COLORS.line,
-                                        "--tw-ring-color": COLORS.teal,
+                                        "--tw-ring-color": COLORS.primary,
                                     }}
                                 />
 
@@ -394,7 +394,7 @@ try {
                             disabled={loading}
                             className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition disabled:opacity-70"
                             style={{
-                                backgroundColor: COLORS.teal,
+                                backgroundColor: COLORS.primary,
                             }}
                         >
                             {loading ? (
@@ -421,7 +421,7 @@ try {
                             type="button"
                             onClick={onBackToLogin}
                             className="text-xs font-medium hover:underline"
-                            style={{ color: COLORS.teal }}
+                            style={{ color: COLORS.primary }}
                         >
                             Sign in
                         </button>
@@ -434,9 +434,8 @@ try {
                     className="text-xs text-center mt-6"
                     style={{ color: COLORS.slate }}
                 >
-                    CareFlow provides operational estimates and queue-management
-                    recommendations. It does not diagnose patients or replace
-                    clinical judgment.
+                    For electrical, fire or other safety emergencies, leave the area and
+                    contact campus security immediately.
                 </p>
 
             </div>

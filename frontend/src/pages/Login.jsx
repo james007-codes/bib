@@ -9,7 +9,7 @@ import { loginUser, loginAdmin } from "../services/authService.js";
 
 export function Login({ onLogin, onRegister }) {
     // "admin" or "user"
-const [role, setRole] = useState("admin");
+const [role, setRole] = useState("user");
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -56,7 +56,7 @@ const handleSubmit = async (e) => {
         let data;
 
         if (role === "admin") {
-            // Staff/Admin login
+            // Maintenance admin login
             data = await loginAdmin(email, password);
 
             console.log("Admin login successful:", data);
@@ -66,10 +66,10 @@ const handleSubmit = async (e) => {
                 role: "admin",
             });
         } else {
-            // Patient login
+            // Student / faculty login
             data = await loginUser(email, password);
 
-            console.log("Patient login successful:", data);
+            console.log("User login successful:", data);
 
             onLogin({
                 ...data.user,
@@ -124,7 +124,7 @@ const handleSubmit = async (e) => {
                             style={{
                                 backgroundColor:
                                     role === "admin"
-                                        ? COLORS.teal
+                                        ? COLORS.primary
                                         : "transparent",
 
                                 color:
@@ -133,7 +133,7 @@ const handleSubmit = async (e) => {
                                         : COLORS.slate,
                             }}
                         >
-                            Staff / Admin
+                            Maintenance Admin
                         </button>
 
                         <button
@@ -143,7 +143,7 @@ const handleSubmit = async (e) => {
                             style={{
                                 backgroundColor:
                                     role === "user"
-                                        ? COLORS.teal
+                                        ? COLORS.primary
                                         : "transparent",
 
                                 color:
@@ -152,7 +152,7 @@ const handleSubmit = async (e) => {
                                         : COLORS.slate,
                             }}
                         >
-                            Patient
+                            Student / Faculty
                         </button>
                     </div>
 
@@ -162,8 +162,8 @@ const handleSubmit = async (e) => {
                         style={{ color: COLORS.ink }}
                     >
                         {role === "admin"
-                            ? "Staff / Admin sign in"
-                            : "Patient sign in"}
+                            ? "Maintenance Admin sign in"
+                            : "Student / faculty sign in"}
                     </h1>
 
                     <p
@@ -171,8 +171,8 @@ const handleSubmit = async (e) => {
                         style={{ color: COLORS.slate }}
                     >
                         {role === "admin"
-                            ? "Sign in to manage today's queue and hospital resources."
-                            : "Sign in to access your CareFlow patient account."}
+                            ? "Sign in to triage, assign and resolve campus complaints."
+                            : "Sign in to report issues and track their progress."}
                     </p>
 
                     {/* Authentication Error */}
@@ -217,8 +217,8 @@ const handleSubmit = async (e) => {
                                 }
                                 placeholder={
                                     role === "admin"
-                                        ? "staff@hospital.org"
-                                        : "patient@email.com"
+                                        ? "admin@college.edu"
+                                        : "you@college.edu"
                                 }
                                 className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
                                 style={{
@@ -226,7 +226,7 @@ const handleSubmit = async (e) => {
                                         ? COLORS.critical
                                         : COLORS.line,
 
-                                    "--tw-ring-color": COLORS.teal,
+                                    "--tw-ring-color": COLORS.primary,
                                 }}
                             />
 
@@ -275,7 +275,7 @@ const handleSubmit = async (e) => {
                                             ? COLORS.critical
                                             : COLORS.line,
 
-                                        "--tw-ring-color": COLORS.teal,
+                                        "--tw-ring-color": COLORS.primary,
                                     }}
                                 />
 
@@ -328,7 +328,7 @@ const handleSubmit = async (e) => {
                                     }
                                     className="rounded"
                                     style={{
-                                        accentColor: COLORS.teal,
+                                        accentColor: COLORS.primary,
                                     }}
                                 />
 
@@ -338,7 +338,7 @@ const handleSubmit = async (e) => {
                             <button
                                 type="button"
                                 className="text-sm font-medium hover:underline"
-                                style={{ color: COLORS.teal }}
+                                style={{ color: COLORS.primary }}
                             >
                                 Forgot password?
                             </button>
@@ -351,7 +351,7 @@ const handleSubmit = async (e) => {
                             disabled={loading}
                             className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition disabled:opacity-70"
                             style={{
-                                backgroundColor: COLORS.teal,
+                                backgroundColor: COLORS.primary,
                             }}
                         >
                             {loading ? (
@@ -372,14 +372,14 @@ const handleSubmit = async (e) => {
         className="text-xs"
         style={{ color: COLORS.slate }}
     >
-        Don't have a CareFlow account?
+        Don&apos;t have a FixFlow account?
     </p>
 
     <button
         type="button"
         onClick={() => onRegister(role)}
         className="mt-1 text-sm font-semibold hover:underline"
-        style={{ color: COLORS.teal }}
+        style={{ color: COLORS.primary }}
     >
         Register now
     </button>
@@ -392,9 +392,8 @@ const handleSubmit = async (e) => {
                     className="text-xs text-center mt-6"
                     style={{ color: COLORS.slate }}
                 >
-                    CareFlow provides operational estimates and queue-management
-                    recommendations. It does not diagnose patients or replace
-                    clinical judgment.
+                    For electrical, fire or other safety emergencies, leave the area and
+                    contact campus security immediately.
                 </p>
 
             </div>

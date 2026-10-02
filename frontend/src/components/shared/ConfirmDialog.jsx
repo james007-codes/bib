@@ -11,7 +11,7 @@ export function ConfirmDialog({ open, title, message, confirmLabel = "Confirm", 
         <p className="text-sm mb-5" style={{ color: COLORS.slate }}>{message}</p>
         <div className="flex gap-3">
           <button onClick={onCancel} className="flex-1 rounded-xl py-2.5 text-sm font-semibold border" style={{ borderColor: COLORS.line, color: COLORS.slate }}>Cancel</button>
-          <button onClick={onConfirm} className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: danger ? COLORS.critical : COLORS.teal }}>{confirmLabel}</button>
+          <button onClick={onConfirm} className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: danger ? COLORS.critical : COLORS.primary }}>{confirmLabel}</button>
         </div>
       </div>
     </div>
