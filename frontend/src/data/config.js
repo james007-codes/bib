@@ -12,6 +12,10 @@ export const ROOM_TYPES = config.roomTypes;
 export const BUILDINGS = config.buildings;
 export const INSTITUTION = config.institution;
 export const USER_TYPES = config.userTypes;
+export const EMAIL_DOMAINS = config.emailDomains || {};
+
+// "202301099.name@student.xavier.ac.in" → "Student"; null if not an XIE address
+export const userTypeForEmail = (email = "") => EMAIL_DOMAINS[email.trim().toLowerCase().split("@")[1]] || null;
 export const DEPARTMENTS = config.departments;
 
 export const departmentLabel = (id) => DEPARTMENTS.find((d) => d.id === id)?.label || null;

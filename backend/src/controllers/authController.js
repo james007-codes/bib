@@ -7,6 +7,15 @@ import config from "../config/complaintConfig.js";
 
 const departmentIds = config.departments.map((d) => d.id);
 
+// Only XIE addresses may register as users; the domain decides Student vs Teacher.
+// e.g. 202301099.name@student.xavier.ac.in → Student, name@xavier.ac.in → Teacher
+const EMAIL_RE = /^[^\s@]+@([^\s@]+)$/;
+const userTypeForEmail = (email) => {
+    const domain = EMAIL_RE.exec(email)?.[1];
+    return (domain && config.emailDomains?.[domain]) || null;
+};
+const allowedDomainsText = Object.keys(config.emailDomains || {}).map((d) => `@${d}`).join(" or ");
+
 // Public shape of a user account (register, login)
 const publicUser = (user) => ({
     id: user._id,
@@ -18,7 +27,8 @@ const publicUser = (user) => ({
 
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password, userType = "Student", department = null } = req.body;
+        const { name, password, department = null } = req.body;
+        const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
 
         if (!name || !email || !password) {
             return res.status(400).json({
@@ -27,10 +37,11 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        if (!config.userTypes.includes(userType)) {
+        const userType = userTypeForEmail(email);
+        if (!userType) {
             return res.status(400).json({
                 success: false,
-                message: `userType must be one of: ${config.userTypes.join(", ")}`,
+                message: `Please register with your XIE email (${allowedDomainsText})`,
             });
         }
 

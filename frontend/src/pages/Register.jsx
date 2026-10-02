@@ -5,7 +5,9 @@ import { COLORS } from "../styles/tokens.js";
 import { Card } from "../components/shared/Card.jsx";
 import { Logo, Vitals } from "../components/shared/Brand.jsx";
 import { registerUser, registerAdmin } from "../services/authService.js";
-import { USER_TYPES, DEPARTMENTS } from "../data/config.js";
+import { DEPARTMENTS, EMAIL_DOMAINS, userTypeForEmail } from "../data/config.js";
+
+const XIE_DOMAINS_TEXT = Object.keys(EMAIL_DOMAINS).map((d) => `@${d}`).join(" or ");
 
 export function Register({ role: initialRole, onLogin, onBackToLogin }) {
     const [role, setRole] = useState(initialRole || "user");
@@ -14,13 +16,15 @@ export function Register({ role: initialRole, onLogin, onBackToLogin }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [userType, setUserType] = useState("Student");
     const [department, setDepartment] = useState("");
 
     const [showPw, setShowPw] = useState(false);
     const [showConfirmPw, setShowConfirmPw] = useState(false);
 
     const [errors, setErrors] = useState({});
+
+    // Student / Teacher comes from the email domain (null until it's an XIE address)
+    const userType = userTypeForEmail(email);
     const [loading, setLoading] = useState(false);
     const [authError, setAuthError] = useState("");
 
@@ -35,6 +39,8 @@ export function Register({ role: initialRole, onLogin, onBackToLogin }) {
             errs.email = "Email is required.";
         } else if (!/^\S+@\S+\.\S+$/.test(email)) {
             errs.email = "Enter a valid email address.";
+        } else if (role === "user" && !userTypeForEmail(email)) {
+            errs.email = `Use your XIE email (${XIE_DOMAINS_TEXT}).`;
         }
 
         if (!password) {
@@ -86,7 +92,7 @@ try {
             role: "admin",
         });
     } else {
-        data = await registerUser(name, email, password, { userType, department });
+        data = await registerUser(name, email, password, { department });
 
         onLogin({
             ...data.user,
@@ -241,29 +247,18 @@ try {
                                         className="block text-sm font-medium mb-1.5"
                                         style={{ color: COLORS.ink }}
                                     >
-                                        I am a
+                                        Account type
                                     </span>
+                                    {/* Decided by the email domain, not chosen */}
                                     <div
-                                        className="flex rounded-md p-1 border"
-                                        style={{ borderColor: COLORS.line }}
-                                        role="group"
-                                        aria-label="Account type"
+                                        className="flex items-center h-[42px] rounded-md px-3 border text-sm"
+                                        style={{
+                                            borderColor: COLORS.line,
+                                            color: userType ? COLORS.ink : COLORS.muted,
+                                        }}
+                                        aria-live="polite"
                                     >
-                                        {USER_TYPES.map((t) => (
-                                            <button
-                                                key={t}
-                                                type="button"
-                                                onClick={() => setUserType(t)}
-                                                aria-pressed={userType === t}
-                                                className="flex-1 rounded py-1.5 text-sm font-medium transition"
-                                                style={{
-                                                    backgroundColor: userType === t ? COLORS.primary : "transparent",
-                                                    color: userType === t ? "white" : COLORS.slate,
-                                                }}
-                                            >
-                                                {t}
-                                            </button>
-                                        ))}
+                                        {userType ? `${userType} (from your XIE email)` : "Detected from your XIE email"}
                                     </div>
                                 </div>
 
@@ -315,7 +310,7 @@ try {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@college.edu"
+                                placeholder={role === "user" ? "202301099.name@student.xavier.ac.in" : "you@xavier.ac.in"}
                                 aria-invalid={!!errors.email}
                                 className="w-full rounded-md border px-3.5 py-2.5 text-sm outline-none focus:ring-2 transition"
                                 style={{

@@ -76,7 +76,7 @@ the role. **No auth header** is sent on these four calls.
 
 | Action   | Role  | Method | Path                    | Body                        |
 |----------|-------|--------|-------------------------|-----------------------------|
-| Register | user  | POST   | `/auth/register`        | `{ name, email, password, userType, department }` |
+| Register | user  | POST   | `/auth/register`        | `{ name, email, password, department }` |
 | Login    | user  | POST   | `/auth/login`           | `{ email, password }`       |
 | Register | admin | POST   | `/auth/admin/register`  | `{ name, email, password }` |
 | Login    | admin | POST   | `/auth/admin/login`     | `{ email, password }`       |
@@ -103,10 +103,15 @@ const account = role === "admin" ? { ...data.admin, role: "admin" } : { ...data.
   `"Admin already exists"`, `400` for missing fields.
 - Client validation: valid email, password ≥ 6 characters, and confirm-password
   must match.
-- User registration also sends `userType` (`"Student"` default, or `"Teacher"`)
-  and `department` (an id from `config.departments`). Show a Student/Teacher
-  toggle and a department dropdown on the **user** register form only. Invalid
-  values return 400. There is no email-domain restriction.
+- **User registration is XIE-only.** The email must end in an allowed domain from
+  `config.emailDomains`, and the domain decides the type:
+  - `@student.xavier.ac.in` → `userType: "Student"` (e.g. `202301099.name@student.xavier.ac.in`)
+  - `@xavier.ac.in` → `userType: "Teacher"`
+  - Any other email returns 400: "Please register with your XIE email (@student.xavier.ac.in or @xavier.ac.in)".
+  - Don't ask for Student/Teacher. Show the type detected from the email instead,
+    and check the domain on the client too.
+  - Also send `department` (an id from `config.departments`, shown as a dropdown).
+  - Admin registration has no domain restriction.
 
 ### Session persistence (localStorage)
 
@@ -141,6 +146,7 @@ config = {
   "institution": { "name": "Xavier Institute of Engineering", "shortName": "XIE", "location": "Mahim West, Mumbai",
                    "address": "...", "email": "office@xavier.ac.in", "phone": "...", "website": "...",
                    "emergencyNote": "Move away from the area ... inform the security guard at the main entrance (24x7) or the General Office" },
+  "emailDomains": { "student.xavier.ac.in": "Student", "xavier.ac.in": "Teacher" },
   "userTypes": ["Student", "Teacher"],
   "departments": [ { "id": "comp", "label": "Computer Engineering" }, { "id": "it", "label": "Information Technology" },
                    { "id": "ece", "label": "Electronics and Computer Engineering" },

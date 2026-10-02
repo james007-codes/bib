@@ -24,6 +24,11 @@
     "emergencyNote": "Move away from the area and keep others away. Inform the security guard at the main entrance (24x7) or the General Office immediately."
   },
 
+  "emailDomains": {
+    "student.xavier.ac.in": "Student",
+    "xavier.ac.in": "Teacher"
+  },
+
   "userTypes": [
     "Student",
     "Teacher"
