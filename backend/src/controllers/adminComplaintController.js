@@ -5,6 +5,7 @@ import config, { flairById } from "../config/complaintConfig.js";
 import { findRecurrence } from "../utils/recurrence.js";
 import { serializeComplaint } from "../utils/serializeComplaint.js";
 import { buildStats } from "../utils/complaintStats.js";
+import { learnFromComplaint, getModelStats, retrainFromDatabase } from "../services/priorityModel.js";
 import { fileUrl, cleanupFiles } from "../middleware/uploadMiddleware.js";
 
 const POPULATE = [
@@ -181,6 +182,8 @@ export async function overridePriority(req, res) {
         });
 
         await complaint.save();
+        // The admin's decision is the strongest signal the priority model gets
+        learnFromComplaint(complaint);
         return respondWithDetail(res, complaint);
     } catch (error) {
         console.error("Override priority error:", error);
@@ -246,5 +249,26 @@ export async function getStats(req, res) {
     } catch (error) {
         console.error("Stats error:", error);
         return bad(res, "Failed to load stats", 500);
+    }
+}
+
+/* =========================
+   GET /api/admin/priority-model         → how well the learned model is doing
+   POST /api/admin/priority-model/retrain → rebuild it from every complaint
+========================= */
+export async function getPriorityModel(req, res) {
+    const stats = await getModelStats();
+    if (!stats) return bad(res, "Priority model is unavailable (is the AI service running?)", 503);
+    return res.json({ success: true, model: stats });
+}
+
+export async function retrainPriorityModel(req, res) {
+    try {
+        const stats = await retrainFromDatabase();
+        if (!stats) return bad(res, "Priority model is unavailable (is the AI service running?)", 503);
+        return res.json({ success: true, model: stats });
+    } catch (error) {
+        console.error("Retrain priority model error:", error);
+        return bad(res, "Failed to retrain priority model", 500);
     }
 }

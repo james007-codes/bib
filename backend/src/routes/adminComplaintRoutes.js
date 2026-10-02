@@ -10,6 +10,8 @@ import {
     overridePriority,
     resolveComplaint,
     getStats,
+    getPriorityModel,
+    retrainPriorityModel,
 } from "../controllers/adminComplaintController.js";
 
 // Mounted at /api/admin alongside the existing adminRoutes (profile).
@@ -24,5 +26,7 @@ router.patch("/complaints/:id/priority", admin, overridePriority);
 router.post("/complaints/:id/resolve", admin, uploadAfterPhoto, resolveComplaint);
 
 router.get("/stats", admin, getStats);
+router.get("/priority-model", admin, getPriorityModel);
+router.post("/priority-model/retrain", admin, retrainPriorityModel);
 
 export default router;

@@ -46,6 +46,23 @@ export const resolveComplaint = async (id, formData) => {
 };
 
 /* =========================
+   PRIORITY MODEL
+========================= */
+
+export const getPriorityModel = async () => {
+    const data = await request("/admin/priority-model", { fallback: "Priority model is unavailable" });
+    return data.model;
+};
+
+export const retrainPriorityModel = async () => {
+    const data = await request("/admin/priority-model/retrain", {
+        method: "POST",
+        fallback: "Failed to retrain priority model",
+    });
+    return data.model;
+};
+
+/* =========================
    STATS
 ========================= */
 

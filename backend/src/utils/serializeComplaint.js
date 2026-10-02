@@ -57,6 +57,17 @@ export function serializeComplaint(doc, recurrence = null) {
             reasons: c.repeatBoost?.reasons ?? [],
         },
         priorityOverrideReason: c.priorityOverrideReason ?? null,
+        mlPrediction: c.mlPrediction
+            ? {
+                  priority: c.mlPrediction.priority,
+                  confidence: c.mlPrediction.confidence,
+                  probabilities: c.mlPrediction.probabilities instanceof Map
+                      ? Object.fromEntries(c.mlPrediction.probabilities)
+                      : c.mlPrediction.probabilities ?? {},
+                  ready: c.mlPrediction.ready,
+                  examplesSeen: c.mlPrediction.examplesSeen,
+              }
+            : null,
         status: c.status,
         reportedBy: reporter,
         recurrence: recurrence ?? {

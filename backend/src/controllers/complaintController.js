@@ -6,6 +6,7 @@ import config, { flairById, resolveLocation } from "../config/complaintConfig.js
 import { detectPriority, applyRepeatEscalation } from "../utils/priority.js";
 import { findRecurrence, countCampusWide } from "../utils/recurrence.js";
 import { serializeComplaint } from "../utils/serializeComplaint.js";
+import { predictPriority, learnFromComplaint } from "../services/priorityModel.js";
 import { fileUrl, cleanupFiles } from "../middleware/uploadMiddleware.js";
 
 const POPULATE = [
@@ -45,7 +46,7 @@ async function computePriority(flair, title, description, location) {
         flairLabel: flairById[flair].label,
     });
 
-    return { result, recurrence };
+    return { result, recurrence, campusPrevious };
 }
 
 export async function previewPriority(req, res) {
@@ -103,7 +104,19 @@ export async function createComplaint(req, res) {
         }
 
         // Server ALWAYS recomputes priority — the preview shown in the browser is never trusted
-        const { result: detected, recurrence } = await computePriority(flair, title, description, location);
+        const { result: detected, recurrence, campusPrevious } = await computePriority(flair, title, description, location);
+
+        const reporterType = req.account.userType || "Student";
+        const mlPrediction = await predictPriority({
+            flair,
+            flairGroup: flairById[flair].group,
+            title: title.trim(),
+            description: description.trim(),
+            location,
+            reporterType,
+            recurrenceCount: recurrence.count,
+            campusRecentCount: campusPrevious,
+        });
 
         const seq = await nextSequence("complaint");
 
@@ -123,10 +136,12 @@ export async function createComplaint(req, res) {
             matchedKeywords: detected.matchedKeywords,
             status: "Reported",
             reportedBy: req.account._id,
-            reporterType: req.account.userType || "Student",
+            reporterType,
             reporterDepartment: req.account.department || null,
             isRecurring: recurrence.isRecurring,
             recurrenceCount: recurrence.count,
+            campusRecentCount: campusPrevious,
+            mlPrediction,
             updates: [
                 {
                     status: "Reported",
@@ -147,6 +162,9 @@ export async function createComplaint(req, res) {
                 },
             ],
         });
+
+        // The rule-based priority is a weak label; an admin override later teaches it properly
+        learnFromComplaint(complaint);
 
         await complaint.populate(POPULATE);
 

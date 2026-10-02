@@ -11,6 +11,7 @@ import { UpdateTimeline } from "../../components/complaints/UpdateTimeline.jsx";
 import { PhotoGallery } from "../../components/complaints/PhotoGallery.jsx";
 import { PhotoDropzone } from "../../components/complaints/PhotoDropzone.jsx";
 import { PriorityReason } from "../../components/complaints/PriorityReason.jsx";
+import { AIPriorityGuess } from "../../components/complaints/AIPriorityGuess.jsx";
 import { RecurrencePanel } from "../../components/complaints/RecurrencePanel.jsx";
 import { PRIORITIES } from "../../data/config.js";
 import { formatDateTime } from "../../utils/format.js";
@@ -103,6 +104,7 @@ export function ComplaintDetail({ id, onBack }) {
                       <PriorityBadge priority={c.priority} raised={["keyword", "repeat"].includes(c.prioritySource)} />
                     </div>
                     <PriorityReason complaint={c} />
+                    <AIPriorityGuess complaint={c} />
                   </div>
                   <PriorityOverride complaint={c} onUpdated={onUpdated} />
                 </div>

@@ -16,3 +16,5 @@ node_modules/
 
 # Logs
 *.log
+# Trained priority model + replay buffer
+priority_model/

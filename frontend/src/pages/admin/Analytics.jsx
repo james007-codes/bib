@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { BarChart3 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { BarChart3, RefreshCw, Sparkles } from "lucide-react";
 
 import { COLORS, PRIORITY_COLORS, STATUS_COLORS } from "../../styles/tokens.js";
 import { ChartCard } from "../../components/analytics/ChartCard.jsx";
 import { HBarChart, TrendChart, RoomFlairChart } from "../../components/analytics/Charts.jsx";
 import { Card } from "../../components/shared/Card.jsx";
-import { EmptyState, ErrorBanner, PageHeader, Skeleton } from "../../components/shared/Feedback.jsx";
-import { getStats } from "../../services/adminService.js";
+import { Button, EmptyState, ErrorBanner, PageHeader, Skeleton } from "../../components/shared/Feedback.jsx";
+import { getStats, getPriorityModel, retrainPriorityModel } from "../../services/adminService.js";
 import { usePolling } from "../../utils/usePolling.js";
 import { LiveIndicator } from "../../components/shared/PulseDot.jsx";
 
@@ -27,6 +27,76 @@ export function RangeToggle({ value, onChange }) {
         </button>
       ))}
     </div>
+  );
+}
+
+const pct = (x) => (x == null ? "–" : `${Math.round(x * 100)}%`);
+
+// How the learned priority model is doing. "Recent accuracy" = guesses made
+// BEFORE the model saw each complaint's final priority, so it reflects real skill.
+function PriorityModelCard() {
+  const [model, setModel] = useState(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    try {
+      setModel(await getPriorityModel());
+      setError("");
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const retrain = async () => {
+    setBusy(true);
+    try {
+      setModel(await retrainPriorityModel());
+      setError("");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const stat = (label, value, hint) => (
+    <div>
+      <div className="text-[11px] uppercase tracking-wide" style={{ color: COLORS.muted }}>{label}</div>
+      <div className="text-lg font-semibold mt-0.5" style={{ color: COLORS.ink }}>{value}</div>
+      {hint && <div className="text-[11px]" style={{ color: COLORS.muted }}>{hint}</div>}
+    </div>
+  );
+
+  return (
+    <Card className="p-5 mb-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-[13px] font-medium flex items-center gap-1.5" style={{ color: COLORS.ink }}>
+            <Sparkles className="w-4 h-4" style={{ color: COLORS.accent }} /> AI priority model
+          </h2>
+          <p className="text-xs mt-1" style={{ color: COLORS.slate }}>
+            Learns from every complaint and gets better each time an admin changes a priority.
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={retrain} disabled={busy}>
+          <RefreshCw className={`w-3.5 h-3.5 ${busy ? "animate-spin" : ""}`} /> {busy ? "Retraining…" : "Retrain from all complaints"}
+        </Button>
+      </div>
+
+      {error && <p className="text-xs" style={{ color: COLORS.warning }}>{error}</p>}
+      {!model && !error && <Skeleton className="h-12 rounded-md" />}
+      {model && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {stat("Complaints learned", model.examplesSeen, model.ready ? "Ready" : "Warming up (needs 20)")}
+          {stat("Admin corrections", model.adminLabels)}
+          {stat("Recent accuracy", pct(model.recentAccuracy), model.recentWindow ? `last ${model.recentWindow} complaints` : "no new complaints yet")}
+          {stat("Agrees with admins", pct(model.recentAdminAccuracy), "on recent priority changes")}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -55,6 +125,8 @@ export function Analytics() {
       <PageHeader title="Analytics" subtitle="What breaks, where, and how often." action={<div className="flex items-center gap-4"><LiveIndicator /><RangeToggle value={range} onChange={setRange} /></div>} />
 
       <ErrorBanner message={error} onRetry={load} />
+
+      <PriorityModelCard />
 
       {!stats && !error && (
         <div className="grid lg:grid-cols-2 gap-4">

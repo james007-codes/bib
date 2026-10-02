@@ -54,6 +54,22 @@ const complaintSchema = new mongoose.Schema(
         detectedPriority: { type: String, enum: config.priorities },
         priorityOverrideReason: { type: String, default: null },
 
+        // Guess from the learned priority model at creation time (advisory only)
+        mlPrediction: {
+            type: new mongoose.Schema(
+                {
+                    priority: { type: String, enum: config.priorities },
+                    confidence: Number,
+                    probabilities: { type: Map, of: Number },
+                    ready: Boolean,
+                    examplesSeen: Number,
+                    predictedAt: Date,
+                },
+                { _id: false }
+            ),
+            default: null,
+        },
+
         status: { type: String, enum: config.statuses, default: "Reported" },
 
         reportedBy: {
@@ -69,6 +85,8 @@ const complaintSchema = new mongoose.Schema(
         // Full history is computed live on the detail endpoints.
         isRecurring: { type: Boolean, default: false },
         recurrenceCount: { type: Number, default: 0 },
+        // Earlier reports of the same flair anywhere on campus (priority model input)
+        campusRecentCount: { type: Number, default: 0 },
 
         updates: { type: [updateSchema], default: [] },
 
