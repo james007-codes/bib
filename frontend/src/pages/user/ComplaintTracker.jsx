@@ -49,7 +49,7 @@ export function ComplaintTracker({ id, onBack }) {
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-mono font-semibold" style={{ color: COLORS.slate }}>{c.ticketNo}</span>
               <FlairChip flair={c.flair} />
-              <PriorityBadge priority={c.priority} raised={c.prioritySource === "keyword"} />
+              <PriorityBadge priority={c.priority} raised={["keyword", "repeat"].includes(c.prioritySource)} />
               <StatusPill status={c.status} />
             </div>
             <h1 className="text-lg font-semibold tracking-tight mt-3" style={{ color: COLORS.ink }}>{c.title}</h1>

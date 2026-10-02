@@ -16,7 +16,9 @@ export const previewPriority = async ({ flair, title, description, buildingId, f
         priority: data.priority,
         source: data.source,
         flairDefault: data.flairDefault,
+        basePriority: data.basePriority,
         matchedKeywords: data.matchedKeywords,
+        repeatBoost: data.repeatBoost,
         recurrencePreview: data.recurrencePreview,
     };
 };

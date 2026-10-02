@@ -14,7 +14,7 @@ import User from "../models/User.js";
 import Complaint from "../models/Complaint.js";
 import Counter, { nextSequence } from "../models/Counter.js";
 import config, { flairById, resolveLocation } from "../config/complaintConfig.js";
-import { detectPriority } from "../utils/priority.js";
+import { detectPriority, applyRepeatEscalation } from "../utils/priority.js";
 
 dotenv.config();
 
@@ -31,56 +31,58 @@ const pick = (arr) => arr[Math.floor(rand() * arr.length)];
 
 // [daysAgo, roomId, flair, title, description, finalStatus]
 const SCRIPTED = [
-    // Demo story: LH-204 electrical issue already reported twice this month
-    [24, "lh-204", "electrical-hazard", "Switchboard sparking near door", "The switchboard next to the door made sparks when the fan switch was turned on.", "Resolved"],
-    [9, "lh-204", "electrical-hazard", "Exposed wire behind projector socket", "Wire insulation is torn and copper is visible behind the projector socket.", "In Progress"],
+    // Demo story: Network Lab (Comp) electrical issue already reported twice this month
+    [24, "cmpn-net", "electrical-hazard", "Switchboard sparking near door", "The switchboard next to the lab door made sparks when the AC was switched on.", "Resolved"],
+    [9, "cmpn-net", "electrical-hazard", "Exposed wire behind projector socket", "Wire insulation is torn and copper is visible behind the projector socket.", "In Progress"],
 
-    // Tap that leaks every month
-    [85, "a-1-wr", "plumbing", "Tap leaking in washroom", "Second tap from the left keeps dripping.", "Resolved"],
-    [57, "a-1-wr", "plumbing", "Same tap leaking again", "The tap that was fixed last month is leaking again.", "Resolved"],
-    [29, "a-1-wr", "plumbing", "Tap leak back again", "Water dripping all day from the same tap.", "Resolved"],
-    [3, "a-1-wr", "plumbing", "Washroom tap leaking (again)", "Third time this tap is leaking. Floor stays wet.", "Escalated"],
+    // Washroom tap that leaks every month
+    [85, "f1-gents", "plumbing", "Tap leaking in washroom", "Second tap from the left keeps dripping.", "Resolved"],
+    [57, "f1-gents", "plumbing", "Same tap leaking again", "The tap that was fixed last month is leaking again.", "Resolved"],
+    [29, "f1-gents", "plumbing", "Tap leak back again", "Water dripping all day from the same tap.", "Resolved"],
+    [3, "f1-gents", "plumbing", "Washroom tap leaking (again)", "Third time this tap is leaking. Floor stays wet.", "Escalated"],
 
-    // Computer Lab 3: most complained-about room
-    [27, "cl-3", "computer", "PC 12 not booting", "PC 12 shows a black screen after the BIOS logo.", "Resolved"],
-    [20, "cl-3", "computer", "PC 7 keyboard not working", "Several keys on PC 7 keyboard are dead.", "Resolved"],
-    [14, "cl-3", "network", "No internet on row 3", "All PCs on row 3 show no network connection.", "Resolved"],
-    [10, "cl-3", "computer", "PC 12 not booting again", "Same PC 12 issue during practicals.", "In Progress"],
-    [6, "cl-3", "computer", "Mouse missing at PC 4", "PC 4 has no mouse.", "Reported"],
-    [2, "cl-3", "ac", "AC not cooling in lab", "Lab is very hot, AC is running but not cooling.", "Reported"],
+    // Computer Centre: most complained-about room
+    [27, "computer-centre", "computer", "PC 12 not booting", "PC 12 shows a black screen after the BIOS logo.", "Resolved"],
+    [20, "computer-centre", "computer", "PC 7 keyboard not working", "Several keys on PC 7 keyboard are dead.", "Resolved"],
+    [14, "computer-centre", "network", "No internet on row 3", "All PCs on row 3 show no network connection.", "Resolved"],
+    [10, "computer-centre", "computer", "PC 12 not booting again", "Same PC 12 issue during practicals.", "In Progress"],
+    [6, "computer-centre", "computer", "Mouse missing at PC 4", "PC 4 has no mouse.", "Reported"],
+    [2, "computer-centre", "ac", "AC not cooling", "Centre is very hot, AC is running but not cooling.", "Reported"],
 
-    // Canteen
-    [18, "main-canteen", "canteen-hygiene", "Cockroaches near food counter", "Saw cockroaches near the samosa tray.", "Resolved"],
-    [5, "main-canteen", "canteen-hygiene", "Dirty plates being served", "Plates have food stains on them.", "In Progress"],
-    [12, "cb-water", "water-filter", "Water filter giving warm water", "Cooler near the canteen is giving warm water.", "Resolved"],
-    [1, "cb-water", "water-filter", "Water filter not working", "No water coming from the filter at all. no water since morning.", "Reported"],
+    // Canteen and drinking water
+    [18, "canteen", "canteen-hygiene", "Cockroaches near food counter", "Saw cockroaches near the samosa tray.", "Resolved"],
+    [5, "canteen", "canteen-hygiene", "Dirty plates being served", "Plates have food stains on them.", "In Progress"],
+    [12, "f0-water", "water-filter", "Water purifier giving warm water", "Purifier on the ground floor is giving warm water.", "Resolved"],
+    [1, "f0-water", "water-filter", "Water purifier not working", "No water coming from the purifier at all. no water since morning.", "Reported"],
 ];
 
 const FILLERS = [
-    ["lh-101", "fan", "Fan not working", "Ceiling fan near the window does not start."],
-    ["lh-102", "projector", "Projector flickering", "Projector display keeps flickering during lectures."],
-    ["lh-201", "smart-board", "Smart board not responding", "Touch input on the smart board is not working."],
-    ["lh-205", "furniture", "Broken bench in last row", "Bench in the last row has a broken plank."],
-    ["lh-301", "smart-board", "Smart board pen not working", "The stylus for the smart board does not register."],
-    ["lh-401", "lights", "Tube light not working", "Two tube lights in the front are off."],
-    ["seminar-1", "ac", "AC leaking water", "AC unit is dripping water on the chairs."],
-    ["el-1", "lab-equipment", "Oscilloscope faulty", "Oscilloscope on bench 3 gives no display."],
+    ["classroom-3", "fan", "Fan not working", "Ceiling fan near the window does not start."],
+    ["classroom-5", "projector", "Projector flickering", "Projector display keeps flickering during lectures."],
+    ["classroom-2", "smart-board", "Smart board not responding", "Touch input on the smart board is not working."],
+    ["tutorial-1", "furniture", "Broken bench in last row", "Bench in the last row has a broken plank."],
+    ["it-sw1", "smart-board", "Smart board pen not working", "The stylus for the smart board does not register."],
+    ["classroom-8", "lights", "Tube light not working", "Two tube lights in the front are off."],
+    ["seminar-hall", "ac", "AC leaking water", "AC unit is dripping water on the chairs."],
+    ["ece-ae", "lab-equipment", "Oscilloscope faulty", "Oscilloscope on bench 3 gives no display."],
     ["lib-reading", "fan", "Fan making noise", "Fan makes a loud rattling noise."],
-    ["lib-digital", "network", "Wi-Fi very slow", "Wi-Fi in the digital library is extremely slow."],
-    ["b-2-wr", "washroom-hygiene", "Washroom not cleaned", "Washroom has not been cleaned since morning."],
-    ["c-2-wr", "plumbing", "Flush not working", "Flush in the second cubicle is broken."],
-    ["a-0-lobby", "lift", "Lift stuck on 2nd floor", "The lift is stuck between floors."],
-    ["a-2-corridor", "structural", "Crack in corridor wall", "A long crack has appeared on the corridor wall."],
-    ["main-aud", "fire-safety", "Fire extinguisher expired", "Extinguisher near the stage shows an expired date."],
-    ["canteen-kitchen", "canteen-equipment", "Mixer not working", "The canteen mixer has stopped working."],
-    ["lh-101", "cleanliness", "Classroom dustbin overflowing", "Dustbin has not been emptied."],
-    ["lh-204", "fan", "Fan regulator broken", "Fan only runs at full speed."],
-    ["cl-1", "computer", "PC 3 very slow", "PC 3 takes 10 minutes to boot."],
-    ["a-1-staff", "ac", "Staff room AC not working", "AC does not turn on."],
-    ["lh-102", "fan", "Fan wobbling", "Fan is wobbling dangerously."],
-    ["main-canteen", "canteen-food", "Stale food served", "Vada pav tasted stale."],
-    ["lh-301", "projector", "Projector HDMI not working", "Laptop does not connect via HDMI."],
-    ["c-1-staff", "power-outage", "No power in staff room", "No power in the staff room since 10 am."],
+    ["lib-computers", "network", "Wi-Fi very slow", "Wi-Fi in the library is extremely slow."],
+    ["f2-ladies", "washroom-hygiene", "Washroom not cleaned", "Washroom has not been cleaned since morning."],
+    ["f3-gents", "plumbing", "Flush not working", "Flush in the second cubicle is broken."],
+    ["f0-lift", "lift", "Lift stuck on 2nd floor", "The lift is stuck between floors."],
+    ["f2-corridor", "structural", "Crack in corridor wall", "A long crack has appeared on the corridor wall."],
+    ["seminar-hall", "fire-safety", "Fire extinguisher expired", "Extinguisher near the stage shows an expired date."],
+    ["canteen", "canteen-equipment", "Mixer not working", "The canteen mixer has stopped working."],
+    ["classroom-3", "cleanliness", "Classroom dustbin overflowing", "Dustbin has not been emptied."],
+    ["cmpn-net", "fan", "Fan regulator broken", "Fan only runs at full speed."],
+    ["it-db", "computer", "PC 3 very slow", "PC 3 takes 10 minutes to boot."],
+    ["conference-room", "ac", "Conference room AC not working", "AC does not turn on."],
+    ["classroom-6", "fan", "Fan wobbling", "Fan is wobbling dangerously."],
+    ["canteen", "canteen-food", "Stale food served", "Vada pav tasted stale."],
+    ["cmpn-db", "printer", "Lab printer jammed", "The Canon printer in the lab keeps jamming."],
+    ["hod-cabins", "power-outage", "No power in HOD cabins", "No power since 10 am."],
+    ["parking", "parking", "Bikes blocking the gate", "Two-wheelers parked across the entry lane."],
+    ["fe-lang2", "software", "Language lab software not opening", "The language lab software crashes on start."],
 ];
 
 const findRoom = (roomId) => {
@@ -117,14 +119,20 @@ async function main() {
     for (const [daysAgo, roomId, flair, title, description, finalStatus] of rows) {
         const createdAt = new Date(now - daysAgo * DAY - Math.floor(rand() * 8) * HOUR);
         const location = findRoom(roomId);
-        const detected = detectPriority(flair, title, description);
-
         const prior = created.filter(
             (c) =>
                 c.location.roomId === roomId &&
                 c.flair === flair &&
                 createdAt - c.createdAt <= config.recurrenceWindowDays * DAY
         );
+        const campusPrior = created.filter(
+            (c) => c.flair === flair && createdAt - c.createdAt <= (config.repeatEscalation?.campusWide?.windowDays ?? 0) * DAY
+        );
+        const detected = applyRepeatEscalation(detectPriority(flair, title, description), {
+            roomPrevious: prior.length,
+            campusPrevious: campusPrior.length,
+            flairLabel: flairById[flair].label,
+        });
 
         const updates = [{ status: "Reported", comment: "Complaint submitted.", by: "System", at: createdAt }];
         let resolution = null;
@@ -156,6 +164,8 @@ async function main() {
             priority: detected.priority,
             prioritySource: detected.source,
             detectedPriority: detected.priority,
+            basePriority: detected.basePriority,
+            repeatBoost: detected.repeatBoost,
             matchedKeywords: detected.matchedKeywords,
             status: finalStatus,
             reportedBy: reporter._id,
@@ -180,7 +190,7 @@ async function main() {
     }
 
     console.log(`Created ${created.length} complaints reported by ${reporter.email}`);
-    console.log("Demo: report 'switchboard sparking' in B Block > 2nd Floor > LH-204 with the Electrical Hazard flair.");
+    console.log("Demo: report 'switchboard sparking' in Main Building > Computer Engineering Labs > Network Lab (Comp) with the Electrical Hazard flair.");
     await mongoose.disconnect();
 }
 

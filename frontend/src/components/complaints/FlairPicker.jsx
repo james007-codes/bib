@@ -25,6 +25,9 @@ export function FlairPicker({ value, onChange }) {
           <span className="font-semibold" style={{ color: COLORS.ink }}>{selected.label}:</span>
           <PriorityBadge priority={selected.defaultPriority} />
           <span className="text-xs" style={{ color: COLORS.slate }}>(details you write can raise it)</span>
+          {selected.handledBy && (
+            <span className="w-full text-xs" style={{ color: COLORS.slate }}>Usually handled by: <span style={{ color: COLORS.ink }}>{selected.handledBy}</span></span>
+          )}
         </div>
       )}
     </div>

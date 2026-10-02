@@ -100,7 +100,7 @@ export function ComplaintDetail({ id, onBack }) {
                   <div>
                     <h2 className="text-[13px] font-medium mb-2" style={{ color: COLORS.ink }}>Priority</h2>
                     <div className="flex items-center gap-2 mb-1.5">
-                      <PriorityBadge priority={c.priority} raised={c.prioritySource === "keyword"} />
+                      <PriorityBadge priority={c.priority} raised={["keyword", "repeat"].includes(c.prioritySource)} />
                     </div>
                     <PriorityReason complaint={c} />
                   </div>

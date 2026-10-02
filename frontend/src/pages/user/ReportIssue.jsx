@@ -8,7 +8,7 @@ import { FlairChip, PriorityBadge, RoomTypeTag } from "../../components/shared/B
 import { LocationPicker, Field, resolveRoom } from "../../components/complaints/LocationPicker.jsx";
 import { FlairPicker } from "../../components/complaints/FlairPicker.jsx";
 import { PhotoDropzone } from "../../components/complaints/PhotoDropzone.jsx";
-import { getFlair, departmentLabel } from "../../data/config.js";
+import { getFlair, departmentLabel, INSTITUTION } from "../../data/config.js";
 import { ordinal } from "../../utils/format.js";
 import { previewPriority, createComplaint } from "../../services/complaintService.js";
 
@@ -108,7 +108,7 @@ export function ReportIssue({ user, onOpenComplaint, onNavigate }) {
           <div className="mt-6 rounded-lg border p-4 inline-flex flex-col items-center gap-2" style={{ borderColor: COLORS.line }}>
             <span className="text-xs" style={{ color: COLORS.slate }}>Ticket number</span>
             <span className="text-2xl font-mono font-semibold" style={{ color: COLORS.primary }}>{created.ticketNo}</span>
-            <PriorityBadge priority={created.priority} raised={created.prioritySource === "keyword"} />
+            <PriorityBadge priority={created.priority} raised={["keyword", "repeat"].includes(created.prioritySource)} />
           </div>
 
           {created.priority === "Critical" && <SafetyBanner className="mt-6 text-left" />}
@@ -203,7 +203,7 @@ export function ReportIssue({ user, onOpenComplaint, onNavigate }) {
               </Row>
               <Row label="Issue type"><FlairChip flair={form.flair} /></Row>
               <Row label="Priority">
-                <PriorityBadge priority={priority} raised={preview?.source === "keyword"} />
+                <PriorityBadge priority={priority} raised={["keyword", "repeat"].includes(preview?.source)} />
               </Row>
               <Row label="Title">{form.title}</Row>
               <Row label="Description"><span className="whitespace-pre-wrap">{form.description}</span></Row>
@@ -267,13 +267,18 @@ function SafetyBanner({ className = "" }) {
   return (
     <div role="alert" className={`flex items-start gap-3 rounded-md border px-4 py-3 ${className}`} style={{ backgroundColor: COLORS.criticalSoft, borderColor: "rgba(239,68,68,0.35)", color: COLORS.critical }}>
       <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
-      <p className="text-sm font-semibold">This looks dangerous. Stay away from the area; maintenance has been alerted.</p>
+      <div>
+        <p className="text-sm font-semibold">This looks dangerous. Maintenance has been alerted.</p>
+        <p className="text-sm mt-1">{INSTITUTION.emergencyNote}</p>
+        <p className="text-xs mt-1 opacity-80">General Office: {INSTITUTION.phone} · {INSTITUTION.email}</p>
+      </div>
     </div>
   );
 }
 
 function PriorityPreview({ flair, priority, preview, loading, roomName }) {
-  const raised = preview?.source === "keyword";
+  const raised = ["keyword", "repeat"].includes(preview?.source);
+  const repeatReasons = preview?.repeatBoost?.reasons || [];
   const rec = preview?.recurrencePreview;
 
   return (
@@ -285,8 +290,16 @@ function PriorityPreview({ flair, priority, preview, loading, roomName }) {
         {raised && (
           <span className="inline-flex items-center gap-1 text-sm font-medium" style={{ color: COLORS.critical }}>
             <TrendingUp className="w-4 h-4" />
-            Raised to {priority} — matched: {preview.matchedKeywords.join(", ")}
+            Raised to {priority}
+            {preview.matchedKeywords?.length > 0 && ` — matched: ${preview.matchedKeywords.join(", ")}`}
           </span>
+        )}
+        {repeatReasons.length > 0 && (
+          <ul className="w-full text-xs space-y-0.5 pl-6 list-disc" style={{ color: COLORS.warning }}>
+            {repeatReasons.map((r) => (
+              <li key={r}>Keeps happening: {r}</li>
+            ))}
+          </ul>
         )}
         {!raised && !loading && (
           <span className="text-xs" style={{ color: COLORS.slate }}>Default for {getFlair(flair).label}</span>

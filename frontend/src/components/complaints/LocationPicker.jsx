@@ -15,19 +15,19 @@ export function LocationPicker({ value, onChange }) {
   return (
     <div className="space-y-4">
       <div className="grid sm:grid-cols-3 gap-3">
-        <Field label="Building">
+        <Field label="Area">
           <select
             className={inputClass}
             style={inputStyle}
             value={value.buildingId}
             onChange={(e) => set({ buildingId: e.target.value, floorId: "", roomId: "" })}
           >
-            <option value="">Select building</option>
+            <option value="">Select area</option>
             {BUILDINGS.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </Field>
 
-        <Field label="Floor">
+        <Field label="Section">
           <select
             className={inputClass}
             style={inputStyle}
@@ -35,7 +35,7 @@ export function LocationPicker({ value, onChange }) {
             disabled={!building}
             onChange={(e) => set({ floorId: e.target.value, roomId: "" })}
           >
-            <option value="">Select floor</option>
+            <option value="">Select section</option>
             {building?.floors.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </Field>
@@ -48,7 +48,7 @@ export function LocationPicker({ value, onChange }) {
             disabled={!floor}
             onChange={(e) => set({ roomId: e.target.value })}
           >
-            <option value="">Select room</option>
+            <option value="">Select room / spot</option>
             {floor?.rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </Field>

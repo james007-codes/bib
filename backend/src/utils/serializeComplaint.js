@@ -50,6 +50,12 @@ export function serializeComplaint(doc, recurrence = null) {
         prioritySource: c.prioritySource,
         matchedKeywords: c.matchedKeywords ?? [],
         detectedPriority: c.detectedPriority ?? c.priority,
+        basePriority: c.basePriority ?? c.detectedPriority ?? c.priority,
+        repeatBoost: {
+            room: c.repeatBoost?.room ?? 0,
+            campus: c.repeatBoost?.campus ?? 0,
+            reasons: c.repeatBoost?.reasons ?? [],
+        },
         priorityOverrideReason: c.priorityOverrideReason ?? null,
         status: c.status,
         reportedBy: reporter,

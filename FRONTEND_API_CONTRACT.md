@@ -138,7 +138,9 @@ hard-code these lists.
 
 ```jsonc
 config = {
-  "institution": { "name": "Xavier Institute of Engineering", "shortName": "XIE", "location": "Mahim West, Mumbai" },
+  "institution": { "name": "Xavier Institute of Engineering", "shortName": "XIE", "location": "Mahim West, Mumbai",
+                   "address": "...", "email": "office@xavier.ac.in", "phone": "...", "website": "...",
+                   "emergencyNote": "Move away from the area ... inform the security guard at the main entrance (24x7) or the General Office" },
   "userTypes": ["Student", "Teacher"],
   "departments": [ { "id": "comp", "label": "Computer Engineering" }, { "id": "it", "label": "Information Technology" },
                    { "id": "ece", "label": "Electronics and Computer Engineering" },
@@ -149,15 +151,15 @@ config = {
   "flairGroups": [ { "id": "electrical-safety", "label": "Electrical & Safety" }, ... ],
   "flairs": [
     { "id": "electrical-hazard", "label": "Electrical Hazard", "group": "electrical-safety",
-      "icon": "Zap", "color": "#DC2626", "defaultPriority": "Critical" },
+      "icon": "Zap", "color": "#DC2626", "defaultPriority": "Critical", "handledBy": "Electrician" },
     ...
   ],
   "escalationKeywords": { "Critical": ["sparking", "smoke", ...], "High": ["no water", "cockroach", ...] },
-  "roomTypes": ["Lecture Hall", "Computer Lab", ...],
+  "roomTypes": ["Classroom", "Computer Lab", ...],
   "buildings": [
-    { "id": "b-block", "name": "B Block", "floors": [
-        { "id": "b-2", "name": "2nd Floor", "rooms": [
-            { "id": "lh-204", "name": "LH-204", "roomType": "Lecture Hall" }, ... ] } ] },
+    { "id": "main", "name": "Main Building", "floors": [
+        { "id": "cmpn-labs", "name": "Computer Engineering Labs", "rooms": [
+            { "id": "cmpn-net", "name": "Network Lab (Comp)", "roomType": "Computer Lab" }, ... ] } ] },
     ...
   ]
 }
@@ -169,28 +171,59 @@ Current values, for reference:
 - Electrical & Safety: Electrical Hazard (Critical, Zap) · Fire Safety (Critical, Flame) · Power Outage (High, PlugZap) · Lights Not Working (Low, Lightbulb)
 - Classroom Resources: Fan Not Working (Medium, Fan) · AC Not Working (Medium, AirVent) · Projector Issue (Medium, Projector) · Smart Board Not Working (Medium, Presentation) · Broken Bench / Chair (Low, Armchair)
 - Labs & IT: Computer / Lab PC Issue (Medium, Monitor) · Wi-Fi & Network (Medium, Wifi) · Lab Equipment Fault (Medium, FlaskConical) · Printer Issue (Low, Printer) · Software / System Issue (Medium, AppWindow)
-- Water & Washroom: Water Filter / Drinking Water (High, GlassWater) · Plumbing / Tap Leak (Medium, Droplets) · Washroom Hygiene (Medium, Bath)
+- Water & Washroom: Water Purifier / Cooler (High, GlassWater) · Plumbing / Tap Leak (Medium, Droplets) · Washroom Hygiene (Medium, Bath)
 - Canteen: Canteen Hygiene (High, Bug) · Canteen Food Quality (Medium, UtensilsCrossed) · Canteen Equipment (Low, CookingPot)
-- Campus: Lift Not Working (High, ArrowUpDown) · Structural Damage (High, Construction) · Door / Window Damage (Low, DoorOpen) · Library Issue (Low, Library) · Parking Issue (Low, CircleParking) · Cleanliness / Housekeeping (Low, Sparkles) · Other (Low, CircleHelp)
+- Campus: Lift Not Working (High, ArrowUpDown) · Structural Damage (High, Construction) · Door / Window Damage (Low, DoorOpen) · Library Issue (Low, Library) · Parking Issue (Low, CircleParking) · Cleanliness / Housekeeping (Low, Sparkles) · Intercom / CCTV (Medium, Cctv) · Garden / Playground (Low, Trees) · Other (Low, CircleHelp)
 
 The `icon` values are **lucide-react** icon names. Each flair has its own
-`color` (hex).
+`color` (hex) and a `handledBy` string (e.g. "Electrician", "Lab Assistant /
+System Administrator", "Lift maintenance (AMC)"). It's informational only, so
+show it as "Usually handled by …". There is no assignment.
 
-**Buildings**: A Block, B Block, C Block, Library Building, Canteen Block,
-Auditorium. Each has floors, and each floor has rooms with a `roomType`.
+**Locations (XIE campus, 85 spots)**: the JSON keys are `buildings → floors →
+rooms`, but at XIE they mean **Area → Section → Room**, so label the pickers
+"Area", "Section" and "Room". There are two areas:
+- **Main Building**, with these sections:
+  - Classrooms & Tutorial Rooms
+  - Computer Engineering Labs
+  - IT Labs
+  - Electronics & Computer Engg Labs
+  - First Year (Applied Sciences) Labs
+  - Computer Centre & Research
+  - Library (1st Floor)
+  - Offices
+  - Halls, Common Rooms & Canteen
+  - One "Corridor & Washrooms" section for each of the four floors (Ground to 3rd)
+- **Campus Grounds**, with one section: Outdoor.
 
-**Room types**: Lecture Hall, Computer Lab, Electronics Lab, Seminar Hall,
-Library, Canteen, Washroom, Staff Room, Auditorium, Corridor, Common Area, Hostel.
+Real lab names come from xavier.ac.in.
+
+**Room types**: Classroom, Tutorial Room, Computer Lab, Electronics Lab,
+Science Lab, Workshop, Drawing Hall, Seminar Hall, Library, Office, Common Room,
+Canteen, Washroom, Corridor, Outdoor.
+
+**Critical safety banner**: show `institution.emergencyNote`, plus the General
+Office phone and email from `institution`.
 
 ---
 
 ## 5. Business rules the UI must reflect
 
-1. **Priority** = the higher of (the flair's `defaultPriority`) and (the highest
-   escalation keyword found in title + description). Keywords can only raise
-   priority, never lower it.
-   - `prioritySource`: `"flair"` (default), `"keyword"` (a keyword raised it), or
-     `"admin"` (manually overridden).
+1. **Priority** is computed in three steps. Each step can only raise it, and it
+   is capped at Critical:
+   1. **Base** = the higher of the flair's `defaultPriority` and the highest
+      escalation keyword found in the title + description.
+   2. **Repeat in the same room** (`config.repeatEscalation.sameRoom`): if there
+      are ≥ 2 earlier reports of the same flair in the same room within 30 days
+      (this is the 3rd), add **+1 level**. With ≥ 4 earlier (5th or later), add **+2**.
+   3. **Spike across campus** (`config.repeatEscalation.campusWide`): if there are
+      ≥ 5 earlier reports of the same flair anywhere in the last 7 days, add
+      **+1 level**.
+   - Steps 2 and 3 add together. `basePriority` is the result of step 1, and
+     `repeatBoost.reasons` explains steps 2 and 3, e.g. *"3rd report of Plumbing /
+     Tap Leak in this room in 30 days (+1)"*.
+   - `prioritySource`: `"flair"`, `"keyword"`, `"repeat"` (a repeat boost raised
+     it) or `"admin"` (manually overridden).
    - The server always recomputes priority on create. The preview endpoint is for
      live UI feedback only.
 2. **Recurring**: an earlier complaint exists for the **same room + same flair**
@@ -221,21 +254,25 @@ Call it while the user types (debounce ~600 ms). Nothing is saved.
 ```jsonc
 // body
 { "flair": "electrical-hazard", "title": "...", "description": "...",
-  "buildingId": "b-block", "floorId": "b-2", "roomId": "lh-204" }   // location optional
+  "buildingId": "main", "floorId": "cmpn-labs", "roomId": "cmpn-net" }   // location optional
 // 200
 { "success": true,
   "priority": "Critical",
-  "source": "flair" | "keyword",
+  "source": "flair" | "keyword" | "repeat",
   "flairDefault": "Critical",
+  "basePriority": "Critical",                       // before repeat boosts
   "matchedKeywords": ["sparking"],
+  "repeatBoost": { "room": 1, "campus": 0, "reasons": ["3rd report of Electrical Hazard in this room in 30 days (+1)"] },
   "recurrencePreview": { "isRecurring": true, "count": 2, "windowDays": 30 } }
 // 400 "A valid flair is required"
 ```
 UI behaviour:
 - If `source === "keyword"`, show *"Raised to Critical — matched: sparking"*.
+- If `repeatBoost.reasons` isn't empty, list each one, e.g. *"Keeps happening: 3rd
+  report of … (+1)"*.
 - If the priority is Critical, show a red safety banner: *"This looks dangerous.
   Stay away from the area; maintenance has been alerted."*
-- If recurring, show *"This issue has been reported 2 times in LH-204 in the last
+- If recurring, show *"This issue has been reported 2 times in Network Lab (Comp) in the last
   30 days."*
 
 ### 6.2 Create complaint — `POST /complaints` (**multipart/form-data**)
@@ -363,16 +400,18 @@ Complaint {
   flair: string                    // flair id
   flairGroup: string               // group id
   location: {
-    buildingId, building,          // "b-block", "B Block"
-    floorId, floor,                // "b-2", "2nd Floor"
-    roomId, roomName, roomType,    // "lh-204", "LH-204", "Lecture Hall"
+    buildingId, building,          // "main", "Main Building"              (Area)
+    floorId, floor,                // "cmpn-labs", "Computer Engineering Labs"  (Section)
+    roomId, roomName, roomType,    // "cmpn-net", "Network Lab (Comp)", "Computer Lab"
     spot: string | null
   }
   title: string
   description: string
   photos: { url: string, name: string }[]   // url is absolute, e.g. http://localhost:5000/uploads/abc.jpg
   priority: "Low" | "Medium" | "High" | "Critical"
-  prioritySource: "flair" | "keyword" | "admin"
+  prioritySource: "flair" | "keyword" | "repeat" | "admin"
+  basePriority: string              // flair + keywords, before repeat boosts
+  repeatBoost: { room: number, campus: number, reasons: string[] }   // levels added + why
   matchedKeywords: string[]
   detectedPriority: string          // what the system computed before any admin override
   priorityOverrideReason: string | null
@@ -531,8 +570,8 @@ URLs, so use them as-is in `<img src>`.
 ## 13. Demo flow that must work
 
 1. Register a user, then run `npm run seed` in `backend/`. This creates about 40
-   demo complaints. LH-204 already has 2 Electrical Hazard reports.
-2. As the user: report LH-204 with the Electrical Hazard flair, write
+   demo complaints. Network Lab (Comp) already has 2 Electrical Hazard reports.
+2. As the user: report Main Building → Computer Engineering Labs → Network Lab (Comp) with the Electrical Hazard flair, write
    "switchboard is sparking" and attach a photo. The preview shows Critical, the
    safety banner and "reported 2 times".
 3. As the admin: it appears in "Critical & not started". Open it, see the

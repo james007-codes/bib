@@ -2,7 +2,7 @@ import React from "react";
 import {
   Zap, Flame, PlugZap, Lightbulb, Fan, AirVent, Projector, Presentation, Armchair, Monitor, Wifi,
   FlaskConical, GlassWater, Droplets, Bath, Bug, UtensilsCrossed, CookingPot, ArrowUpDown,
-  Construction, Sparkles, CircleHelp, TrendingUp, Repeat, Printer, AppWindow, DoorOpen, Library, CircleParking,
+  Construction, Sparkles, CircleHelp, TrendingUp, Repeat, Printer, AppWindow, DoorOpen, Library, CircleParking, Cctv, Trees,
 } from "lucide-react";
 
 import { COLORS, PRIORITY_COLORS, STATUS_COLORS } from "../../styles/tokens.js";
@@ -15,7 +15,7 @@ import { getFlair } from "../../data/config.js";
 const ICONS = {
   Zap, Flame, PlugZap, Lightbulb, Fan, AirVent, Projector, Presentation, Armchair, Monitor, Wifi,
   FlaskConical, GlassWater, Droplets, Bath, Bug, UtensilsCrossed, CookingPot, ArrowUpDown,
-  Construction, Sparkles, CircleHelp, Printer, AppWindow, DoorOpen, Library, CircleParking,
+  Construction, Sparkles, CircleHelp, Printer, AppWindow, DoorOpen, Library, CircleParking, Cctv, Trees,
 };
 
 export function FlairIcon({ name, className = "w-4 h-4", style }) {

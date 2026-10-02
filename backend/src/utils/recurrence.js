@@ -38,3 +38,20 @@ export async function findRecurrence({ roomId, flair, before = new Date(), exclu
         })),
     };
 }
+
+/**
+ * Count earlier complaints with the same flair anywhere on campus inside
+ * repeatEscalation.campusWide.windowDays (used for campus-wide priority boosts).
+ */
+export async function countCampusWide({ flair, before = new Date(), excludeId = null }) {
+    const windowDays = config.repeatEscalation?.campusWide?.windowDays;
+    if (!windowDays) return 0;
+
+    const query = {
+        flair,
+        createdAt: { $gte: new Date(before.getTime() - windowDays * DAY_MS), $lte: before },
+    };
+    if (excludeId) query._id = { $ne: excludeId };
+
+    return Complaint.countDocuments(query);
+}

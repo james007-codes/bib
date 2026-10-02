@@ -33,7 +33,7 @@ export function ComplaintCard({ complaint: c, onClick }) {
       </div>
 
       <div className="hidden sm:flex items-center gap-4 shrink-0">
-        <span className="w-20"><PriorityBadge priority={c.priority} raised={c.prioritySource === "keyword"} /></span>
+        <span className="w-20"><PriorityBadge priority={c.priority} raised={["keyword", "repeat"].includes(c.prioritySource)} /></span>
         <StatusPill status={c.status} />
       </div>
       <div className="sm:hidden"><StatusPill status={c.status} /></div>

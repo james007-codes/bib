@@ -38,7 +38,7 @@ export function ComplaintTable({ complaints, onSelect }) {
                   <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: critical ? COLORS.critical : COLORS.slate }}>
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.fg }} />
                     {c.priority}
-                    {c.prioritySource === "keyword" && <TrendingUp className="w-3 h-3" aria-label="raised by keyword" />}
+                    {["keyword", "repeat"].includes(c.prioritySource) && <TrendingUp className="w-3 h-3" aria-label="raised automatically" />}
                   </span>
                 </td>
                 <td className="px-2 font-mono text-xs whitespace-nowrap" style={{ color: COLORS.muted }}>{c.ticketNo}</td>

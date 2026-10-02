@@ -47,3 +47,52 @@ export function detectPriority(flairId, ...texts) {
         matchedKeywords,
     };
 }
+
+const ordinal = (n) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+/**
+ * Repeat escalation, applied on top of detectPriority():
+ *   - same room + same flair within recurrenceWindowDays (config.repeatEscalation.sameRoom)
+ *   - same flair anywhere on campus within campusWide.windowDays
+ * Boosts add up, only ever raise, and are capped at the highest priority.
+ *
+ * roomPrevious / campusPrevious = number of EARLIER complaints (not counting this one).
+ */
+export function applyRepeatEscalation(detected, { roomPrevious = 0, campusPrevious = 0, flairLabel = "this issue" } = {}) {
+    const rules = config.repeatEscalation || {};
+    const reasons = [];
+
+    let room = 0;
+    for (const rule of rules.sameRoom || []) {
+        if (roomPrevious >= rule.minPrevious) room = Math.max(room, rule.raiseBy);
+    }
+    if (room) {
+        reasons.push(
+            `${ordinal(roomPrevious + 1)} report of ${flairLabel} in this room in ${config.recurrenceWindowDays} days (+${room})`
+        );
+    }
+
+    const campus = rules.campusWide && campusPrevious >= rules.campusWide.minPrevious ? rules.campusWide.raiseBy : 0;
+    if (campus) {
+        reasons.push(
+            `${campusPrevious + 1} ${flairLabel} reports across campus in ${rules.campusWide.windowDays} days (+${campus})`
+        );
+    }
+
+    const maxRank = config.priorities.length - 1;
+    const baseRank = PRIORITY_RANK[detected.priority];
+    const finalRank = Math.min(maxRank, baseRank + room + campus);
+    const raised = finalRank > baseRank;
+
+    return {
+        ...detected,
+        basePriority: detected.priority,
+        priority: config.priorities[finalRank],
+        source: raised ? "repeat" : detected.source,
+        repeatBoost: raised ? { room, campus, reasons } : { room: 0, campus: 0, reasons: [] },
+    };
+}

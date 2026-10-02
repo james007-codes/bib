@@ -42,7 +42,14 @@ const complaintSchema = new mongoose.Schema(
         photos: { type: [photoSchema], default: [] },
 
         priority: { type: String, enum: config.priorities, required: true },
-        prioritySource: { type: String, enum: ["flair", "keyword", "admin"], required: true },
+        prioritySource: { type: String, enum: ["flair", "keyword", "repeat", "admin"], required: true },
+        // Priority from flair + keywords, before repeat escalation
+        basePriority: { type: String, enum: config.priorities },
+        repeatBoost: {
+            room: { type: Number, default: 0 },
+            campus: { type: Number, default: 0 },
+            reasons: { type: [String], default: [] },
+        },
         matchedKeywords: { type: [String], default: [] },
         detectedPriority: { type: String, enum: config.priorities },
         priorityOverrideReason: { type: String, default: null },

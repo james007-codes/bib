@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 import Complaint from "../models/Complaint.js";
 import { nextSequence } from "../models/Counter.js";
 import config, { flairById, resolveLocation } from "../config/complaintConfig.js";
-import { detectPriority } from "../utils/priority.js";
-import { findRecurrence } from "../utils/recurrence.js";
+import { detectPriority, applyRepeatEscalation } from "../utils/priority.js";
+import { findRecurrence, countCampusWide } from "../utils/recurrence.js";
 import { serializeComplaint } from "../utils/serializeComplaint.js";
 import { fileUrl, cleanupFiles } from "../middleware/uploadMiddleware.js";
 
@@ -26,27 +26,48 @@ export function getComplaintConfig(req, res) {
    POST /api/complaints/preview
    Live priority + recurrence preview while the user types (nothing is saved)
 ========================= */
+/**
+ * Full priority pipeline: flair default → keywords → repeat escalation
+ * (same room + flair, and same flair campus-wide).
+ */
+async function computePriority(flair, title, description, location) {
+    const detected = detectPriority(flair, title, description);
+    if (!detected) return null;
+
+    const [recurrence, campusPrevious] = await Promise.all([
+        location ? findRecurrence({ roomId: location.roomId, flair }) : null,
+        countCampusWide({ flair }),
+    ]);
+
+    const result = applyRepeatEscalation(detected, {
+        roomPrevious: recurrence?.count ?? 0,
+        campusPrevious,
+        flairLabel: flairById[flair].label,
+    });
+
+    return { result, recurrence };
+}
+
 export async function previewPriority(req, res) {
     const { flair, title = "", description = "", buildingId, floorId, roomId } = req.body;
 
-    const result = detectPriority(flair, title, description);
-    if (!result) return bad(res, "A valid flair is required");
-
-    let recurrencePreview = { isRecurring: false, count: 0, windowDays: config.recurrenceWindowDays };
-
     const location = resolveLocation(buildingId, floorId, roomId);
-    if (location) {
-        const r = await findRecurrence({ roomId: location.roomId, flair });
-        recurrencePreview = { isRecurring: r.isRecurring, count: r.count, windowDays: r.windowDays };
-    }
+    const computed = await computePriority(flair, title, description, location);
+    if (!computed) return bad(res, "A valid flair is required");
+
+    const { result, recurrence } = computed;
 
     res.json({
         success: true,
         priority: result.priority,
         source: result.source,
         flairDefault: result.flairDefault,
+        basePriority: result.basePriority,
         matchedKeywords: result.matchedKeywords,
-        recurrencePreview,
+        repeatBoost: result.repeatBoost,
+        recurrencePreview: recurrence
+            ? { isRecurring: recurrence.isRecurring, count: recurrence.count, windowDays: recurrence.windowDays }
+            : { isRecurring: false, count: 0, windowDays: config.recurrenceWindowDays },
     });
 }
 
@@ -82,8 +103,7 @@ export async function createComplaint(req, res) {
         }
 
         // Server ALWAYS recomputes priority — the preview shown in the browser is never trusted
-        const detected = detectPriority(flair, title, description);
-        const recurrence = await findRecurrence({ roomId: location.roomId, flair });
+        const { result: detected, recurrence } = await computePriority(flair, title, description, location);
 
         const seq = await nextSequence("complaint");
 
@@ -98,6 +118,8 @@ export async function createComplaint(req, res) {
             priority: detected.priority,
             prioritySource: detected.source,
             detectedPriority: detected.priority,
+            basePriority: detected.basePriority,
+            repeatBoost: detected.repeatBoost,
             matchedKeywords: detected.matchedKeywords,
             status: "Reported",
             reportedBy: req.account._id,
@@ -108,10 +130,19 @@ export async function createComplaint(req, res) {
             updates: [
                 {
                     status: "Reported",
-                    comment:
-                        detected.source === "keyword"
-                            ? `Complaint submitted. Priority raised to ${detected.priority} (matched: ${detected.matchedKeywords.join(", ")}).`
-                            : "Complaint submitted.",
+                    comment: [
+                        "Complaint submitted.",
+                        detected.matchedKeywords.length
+                            ? `Keywords matched: ${detected.matchedKeywords.join(", ")}.`
+                            : null,
+                        detected.source === "repeat"
+                            ? `Priority raised from ${detected.basePriority} to ${detected.priority} because this keeps happening: ${detected.repeatBoost.reasons.join("; ")}.`
+                            : detected.source === "keyword"
+                              ? `Priority raised to ${detected.priority}.`
+                              : null,
+                    ]
+                        .filter(Boolean)
+                        .join(" "),
                     by: "System",
                 },
             ],
